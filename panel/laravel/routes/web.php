@@ -1,20 +1,35 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Http\Controllers\AnalyticsController;
-use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DomainController;
 use App\Http\Controllers\LinkController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', DashboardController::class)->name('dashboard');
+$panelHost = (string) config('panel.host', '');
 
-Route::middleware(['auth'])->group(function (): void {
-    Route::get('/links', [LinkController::class, 'index'])->name('links.index');
-    Route::get('/links/create', [LinkController::class, 'create'])->name('links.create');
-    Route::post('/links', [LinkController::class, 'store'])->name('links.store');
+$panelRoutes = static function (): void {
+    Route::get('/', DashboardController::class)->name('dashboard');
 
-    Route::get('/domains', [DomainController::class, 'index'])->name('domains.index');
-    Route::post('/domains', [DomainController::class, 'store'])->name('domains.store');
+    Route::middleware(['auth'])->group(function (): void {
+        Route::get('/links', [LinkController::class, 'index'])->name('links.index');
+        Route::get('/links/create', [LinkController::class, 'create'])->name('links.create');
+        Route::post('/links', [LinkController::class, 'store'])->name('links.store');
 
-    Route::get('/analytics/{shortCode}', [AnalyticsController::class, 'show'])->name('analytics.show');
-});
+        Route::get('/domains', [DomainController::class, 'index'])->name('domains.index');
+        Route::post('/domains', [DomainController::class, 'store'])->name('domains.store');
+
+        Route::get('/analytics/{shortCode}', [AnalyticsController::class, 'show'])->name('analytics.show');
+    });
+};
+
+if ($panelHost !== '') {
+    // Domain guard: garante que rotas do painel só respondem em PANEL_HOST,
+    // evitando colisão com slugs públicos do Shlink.
+    Route::domain($panelHost)->group($panelRoutes);
+} else {
+    // Fallback local (PANEL_HOST vazio): serve o painel em qualquer host.
+    $panelRoutes();
+}
