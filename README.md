@@ -49,5 +49,5 @@ docker compose logs -f shlink
 
 ## Guias de produção
 
-- [Checklist de producao para Lovable](docs/lovable/production-checklist.md)
+- [Checklist de producao para Lovable](docs/lovable/checklist.md)
 - [Seção futura para `me.vr766.com`](docs/sections/me-vr766-com.md)

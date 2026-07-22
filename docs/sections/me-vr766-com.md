@@ -44,6 +44,10 @@ me.vr766.com/
 4. Criar checklist proprio de producao.
 5. Manter o deploy isolado do motor Shlink.
 
+## Arquivo de apoio
+
+- [Checklist de producao do Lovable](../lovable/checklist.md)
+
 ## Regra principal
 
 Se houver duvida, este dominio deve ser tratado como uma area independente do motor `api-shlink.vr766.com`.

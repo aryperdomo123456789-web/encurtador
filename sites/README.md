@@ -5,6 +5,7 @@ Este diretorio agrupa as areas separadas do projeto para facilitar a evolucao po
 ## Secoes
 
 - `me.vr766.com/` -> area futura do site ou painel que vai morar em `me.vr766.com`.
+- `api-shlink.vr766.com/` -> motor Shlink e documentacao operacional atual.
 
 ## Regra de organizacao
 

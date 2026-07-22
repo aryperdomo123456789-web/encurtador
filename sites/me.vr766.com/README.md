@@ -1,21 +1,41 @@
-# Area futura de `me.vr766.com`
+# `me.vr766.com`
 
-Este diretorio existe para reservar o espaco do futuro site ou painel que vai viver em `me.vr766.com`.
+Base reservada para o futuro site ou painel que vai morar em `me.vr766.com`.
 
-## Uso esperado
+## Objetivo
 
-- frontend publico;
-- painel administrativo, se esse host for o escolhido;
-- assets e paginas desse ambiente;
-- documentacao especifica do deploy futuro.
+Manter este host separado do motor Shlink e organizar aqui tudo que o Lovable precisar para assumir o ambiente depois.
 
-## Regras
+## Estrutura
 
-- manter separado do motor `api-shlink.vr766.com`;
-- nao colocar segredos reais aqui;
-- nao misturar logs, cache ou dependencias geradas;
-- manter as rotas publicas bem definidas para nao colidir com slugs.
+```text
+sites/me.vr766.com/
+  README.md
+  app/
+  docs/
+  public/
+  resources/
+  routes/
+  storage/
+```
 
-## Observacao
+## O que vai aqui
 
-Se o Lovable for assumir esse ambiente depois, ele deve usar esta pasta como ponto inicial para organizar a segunda base.
+- interface publica;
+- painel administrativo, se este host for o escolhido;
+- assets e componentes do frontend;
+- documentacao de deploy;
+- arquivos de apoio para o Lovable.
+
+## O que nao vai aqui
+
+- segredos reais;
+- logs;
+- cache;
+- arquivos gerados de build;
+- dependencias instaladas;
+- dados temporarios de producao.
+
+## Regra principal
+
+Se houver duvida, trate esta area como um projeto separado do `api-shlink.vr766.com`.
