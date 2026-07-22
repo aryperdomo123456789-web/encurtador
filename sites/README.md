@@ -4,7 +4,7 @@ Este diretorio agrupa as areas separadas do projeto para facilitar a evolucao po
 
 ## Secoes
 
-- `me.vr766.com/` -> area futura do site ou painel que vai morar em `me.vr766.com`.
+- `me.vr766.com/` -> area do painel/site atualmente associada ao host `me.vr766.com`.
 - `api-shlink.vr766.com/` -> motor Shlink e documentacao operacional atual.
 - `docs/lovable/` -> entrada oficial para o Lovable seguir o backlog e a ordem de trabalho.
 

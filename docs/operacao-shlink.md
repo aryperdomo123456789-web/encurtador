@@ -1,10 +1,64 @@
 # Operação do Shlink no SaaS
 
+## Estado atual do ambiente
+
+- `api-shlink.vr766.com`: repositório principal do projeto e base do painel Laravel.
+- `me.vr766.com`: host ativo do painel, apontando para `panel/laravel/public`.
+- `/www/wwwroot/me.vr766.com`: diretório reservado para o futuro segundo site, hoje sem uso no deploy atual.
+
 ## Endereços
 
 - `api-shlink.vr766.com`: API do Shlink
-- `me.vr766.com`: domínio público de links
-- `app.me.vr766.com` ou `/admin`: painel administrativo, se você quiser evitar colisão de rotas
+- `me.vr766.com`: painel administrativo atualmente em uso
+- `slug-host.a-definir`: domínio público de links, se você quiser evitar colisão de rotas
+
+## aaPanel / Nginx
+
+Para o painel atual, o document root correto nao e `/www/wwwroot/me.vr766.com`.
+O root deve apontar para o `public` do Laravel dentro do repo:
+
+```nginx
+server {
+    listen 80;
+    listen 443 ssl;
+    server_name me.vr766.com;
+    root /www/wwwroot/api-shlink.vr766.com/panel/laravel/public;
+    index index.php index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include enable-php-83.conf;
+    }
+}
+```
+
+### Paths que precisam de escrita
+
+- `/www/wwwroot/api-shlink.vr766.com/panel/laravel/storage`
+- `/www/wwwroot/api-shlink.vr766.com/panel/laravel/bootstrap/cache`
+- `/www/wwwroot/api-shlink.vr766.com/panel/laravel/database/database.sqlite`
+
+### O que precisa existir para nao dar 404 ou 500
+
+- `root` apontando para `panel/laravel/public`;
+- `try_files` redirecionando para `index.php`;
+- permissao de escrita em `storage` e `bootstrap/cache`;
+- banco SQLite ou MariaDB com permissão correta;
+- migrations aplicadas;
+- usuario inicial criado.
+
+### O que nao precisa ser copiado para `/www/wwwroot/me.vr766.com`
+
+- o repositorio inteiro;
+- `vendor/`;
+- `storage/` completo;
+- `bootstrap/cache/`;
+- `.env` real.
+
+Se no futuro o host `me.vr766.com` virar um projeto separado, ai sim o docroot passa a ser outro, normalmente `.../public` do novo app.
 
 ## Variáveis de ambiente principais
 
@@ -68,8 +122,8 @@ Exemplo seguro:
 
 Exemplo mais seguro ainda:
 
-- painel: `app.me.vr766.com`
-- slugs: `me.vr766.com/{slug}`
+- painel: `me.vr766.com`
+- slugs: `slug-host.a-definir/{slug}`
 
 ## Próximo passo operacional
 
@@ -77,3 +131,13 @@ Exemplo mais seguro ainda:
 - aplicar o schema MariaDB;
 - conectar o painel ao client PHP;
 - escolher o proxy reverso com ACME automático.
+
+## Checklist rapido de deploy
+
+1. Confirmar que `me.vr766.com` aponta para o `public/` do Laravel.
+2. Confirmar permissao de escrita nas pastas do runtime.
+3. Rodar as migrations.
+4. Criar o usuario inicial do painel.
+5. Validar `/login` no navegador.
+6. Validar `php artisan test`.
+7. Somente depois disso promover para produção.

@@ -5,9 +5,10 @@ Use esta pasta como ponto de partida para qualquer trabalho do Lovable neste rep
 ## Ordem de leitura
 
 1. [Checklist de producao](./checklist.md)
-2. [Seção futura para `me.vr766.com`](../sections/me-vr766-com.md)
-3. [Sites do projeto](../../sites/README.md)
-4. [Base futura de `me.vr766.com`](../../sites/me.vr766.com/README.md)
+2. [Prompt para o Lovable](./prompt.md)
+3. [Seção futura para `me.vr766.com`](../sections/me-vr766-com.md)
+4. [Sites do projeto](../../sites/README.md)
+5. [Base futura de `me.vr766.com`](../../sites/me.vr766.com/README.md)
 
 ## Objetivo
 

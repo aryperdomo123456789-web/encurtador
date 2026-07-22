@@ -58,8 +58,8 @@ Eliminar ambiguidade antes de codar o painel.
 
 ### Decisões obrigatórias
 
-- painel administrativo vai ficar em `app.me.vr766.com` ou em `/admin`;
-- domínio de slug vai continuar em `me.vr766.com` ou em domínios de cliente;
+- painel administrativo vai ficar em `me.vr766.com` ou em `/admin`;
+- domínio de slug precisa ser definido separadamente para não colidir com o painel;
 - Shlink continua isolado como motor de redirect.
 
 ### Resultado esperado

@@ -6,6 +6,12 @@ Esta seção reserva o espaco do repositório para tudo que pertencer ao futuro 
 
 Separar claramente o que e do motor `api-shlink.vr766.com` e o que e do site/painel que vai viver em `me.vr766.com`.
 
+## Estado atual
+
+- O host `me.vr766.com` esta sendo usado hoje pelo painel Laravel do repo principal.
+- O diretorio `/www/wwwroot/me.vr766.com` continua reservado para um futuro projeto separado.
+- O site atual nao depende desse diretorio para funcionar.
+
 ## O que deve ficar aqui
 
 - layout e interface publica do dominio;
@@ -44,9 +50,27 @@ me.vr766.com/
 4. Criar checklist proprio de producao.
 5. Manter o deploy isolado do motor Shlink.
 
+## Configuracao sugerida para o futuro host
+
+Quando `me.vr766.com` virar um app proprio, o document root deve ser o `public/` do novo projeto, e nao o repositorio raiz.
+
+Exemplo:
+
+- codigo: `/www/wwwroot/me.vr766.com`
+- document root: `/www/wwwroot/me.vr766.com/public`
+- runtime: PHP 8.3
+- escrita: `storage/` e `bootstrap/cache/`
+
+Se o futuro app nao for Laravel, a mesma regra vale:
+
+- root deve apontar para o diretorio publico do app;
+- os arquivos de build nao devem ficar espalhados na raiz;
+- dados sensiveis devem sair do git.
+
 ## Arquivo de apoio
 
 - [Checklist de producao do Lovable](../lovable/checklist.md)
+- [Operacao do Shlink no SaaS](../operacao-shlink.md)
 
 ## Regra principal
 

@@ -11,12 +11,13 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withCommands([__DIR__.'/../app/Console/Commands'])
     ->withMiddleware(function (Middleware $middleware): void {
         // Painel roda atrás de proxy reverso (Traefik/Caddy). Sem isso, o
         // Laravel não confia nos cabeçalhos X-Forwarded-* e URLs geradas
         // saem com esquema/host errados.
         $middleware->trustProxies(
-            at: config('panel.trusted_proxies', '*'),
+            at: env('TRUSTED_PROXIES', '*'),
             headers: Request::HEADER_X_FORWARDED_FOR
                 | Request::HEADER_X_FORWARDED_HOST
                 | Request::HEADER_X_FORWARDED_PORT

@@ -24,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
                 baseUrl: (string) config('shlink.base_url', 'https://api-shlink.vr766.com'),
                 apiKey: (string) config('shlink.api_key', ''),
                 apiVersion: (int) config('shlink.api_version', 3),
+                timeoutSeconds: (int) config('shlink.timeout', 20),
             );
         });
 
