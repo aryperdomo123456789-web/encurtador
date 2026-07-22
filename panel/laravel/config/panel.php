@@ -35,4 +35,17 @@ return [
     */
 
     'trusted_proxies' => env('TRUSTED_PROXIES', '*'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Painel — Custom Domain DNS Target
+    |--------------------------------------------------------------------------
+    |
+    | Alvo que os clientes devem apontar via CNAME (ou A) ao registrar um
+    | domínio próprio no painel. A verificação de DNS compara os registros
+    | resolvidos com este valor antes de registrar o domínio no Shlink.
+    |
+    */
+
+    'custom_domain_dns_target' => env('PANEL_CUSTOM_DOMAIN_DNS_TARGET', 'me.vr766.com'),
 ];
