@@ -30,16 +30,22 @@ final class AuthController extends Controller
     public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'email'    => ['required', 'string', 'email'],
+            'login'    => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
+        $identifier = trim($credentials['login']);
+        $attemptCredentials = [
+            filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'name' => $identifier,
+            'password' => $credentials['password'],
+        ];
+
         $remember = $request->boolean('remember');
 
-        if (! Auth::attempt($credentials, $remember)) {
+        if (! Auth::attempt($attemptCredentials, $remember)) {
             return back()
-                ->withInput($request->only('email', 'remember'))
-                ->withErrors(['email' => __('auth.failed')]);
+                ->withInput($request->only('login', 'remember'))
+                ->withErrors(['login' => __('auth.failed')]);
         }
 
         $request->session()->regenerate();

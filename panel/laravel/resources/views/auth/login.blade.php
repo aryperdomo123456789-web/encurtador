@@ -41,8 +41,8 @@
         <form method="POST" action="{{ route('login.attempt') }}" novalidate>
             @csrf
 
-            <label for="email">E-mail</label>
-            <input id="email" name="email" type="email" required autofocus autocomplete="email" value="{{ old('email') }}">
+            <label for="login">Usuário ou e-mail</label>
+            <input id="login" name="login" type="text" required autofocus autocomplete="username" value="{{ old('login') }}">
 
             <label for="password">Senha</label>
             <input id="password" name="password" type="password" required autocomplete="current-password">

@@ -33,7 +33,7 @@ final class LoginTest extends TestCase
         ]);
 
         $response = $this->post(route('login.attempt'), [
-            'email'    => $user->email,
+            'login'    => $user->email,
             'password' => 'secret-password',
         ]);
 
@@ -51,13 +51,31 @@ final class LoginTest extends TestCase
         $response = $this
             ->from(route('login'))
             ->post(route('login.attempt'), [
-                'email'    => $user->email,
+                'login'    => $user->email,
                 'password' => 'wrong-password',
             ]);
 
         $response->assertRedirect(route('login'));
-        $response->assertSessionHasErrors('email');
+        $response->assertSessionHasErrors('login');
         $this->assertGuest();
+    }
+
+    public function test_login_with_username_works_too(): void
+    {
+        $user = User::factory()->create([
+            'name'     => 'mago',
+            'email'    => 'mago@vr766.com',
+            'password' => bcrypt('mago'),
+        ]);
+
+        $response = $this->post(route('login.attempt'), [
+            'login'    => 'mago',
+            'password' => 'mago',
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+        $this->assertTrue(Auth::check());
+        $this->assertSame($user->id, Auth::id());
     }
 
     public function test_logout_ends_session_and_redirects_to_login(): void
