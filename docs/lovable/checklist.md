@@ -14,7 +14,7 @@ Itens que bloqueiam qualquer entrega segura.
 
 | Pri | Status | Item |
 |---|---|---|
-| P0 | [x] | Travar responsabilidades entre `api-shlink.vr766.com`, `app.me.vr766.com` e `me.vr766.com` |
+| P0 | [x] | Travar responsabilidades entre `api-shlink.vr766.com`, `me.vr766.com` e o host público de slugs |
 | P0 | [ ] | Garantir que Laravel, MariaDB e variaveis de ambiente sobem sem erro |
 | P0 | [x] | Garantir que `.env`, logs e arquivos gerados nao sejam versionados |
 | P0 | [x] | Fechar autenticacao e base do painel |
@@ -47,7 +47,7 @@ Itens de acabamento, confiabilidade e operacao.
 | P2 | [ ] | Adicionar backup minimo e log de auditoria |
 | P2 | [ ] | Tratar erros `400`, `401`, `403`, `404`, `409`, `422`, `429` e `5xx` |
 | P2 | [ ] | Cobrir testes de dominio proprio, analytics e proxy/TLS |
-| P2 | [ ] | Documentar deploy, rollback e operacao |
+| P2 | [x] | Documentar deploy, rollback e operacao |
 | P2 | [ ] | Consolidar a base futura de `me.vr766.com` como projeto separado |
 
 ## Ordem de execucao

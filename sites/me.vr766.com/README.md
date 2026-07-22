@@ -10,7 +10,7 @@ Manter este host separado do motor Shlink e organizar aqui tudo que o Lovable pr
 
 1. Ler [docs/lovable/README.md](../../docs/lovable/README.md).
 2. Seguir [docs/lovable/checklist.md](../../docs/lovable/checklist.md).
-3. Usar esta pasta como esqueleto do segundo ambiente.
+3. Usar esta pasta como esqueleto do ambiente atual de `me.vr766.com`.
 
 ## Estrutura
 

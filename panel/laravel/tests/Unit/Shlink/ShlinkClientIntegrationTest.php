@@ -96,7 +96,9 @@ final class ShlinkClientIntegrationTest extends TestCase
             $this->fail("Expected ShlinkApiException for HTTP 401.");
         } catch (ShlinkApiException $e) {
             $this->assertSame(401, $e->getStatusCode());
-            $this->assertStringContainsString("Invalid API key", $e->getMessage());
+            $this->assertStringContainsString("The provided API key does not exist.", $e->getMessage());
+            $this->assertSame("Invalid API key", $e->getTitle());
+            $this->assertSame("The provided API key does not exist.", $e->getDetail());
             $this->assertSame("req-123", $e->getRequestId());
         }
     }
