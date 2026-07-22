@@ -46,3 +46,8 @@ docker compose logs -f shlink
 - O painel e o domínio de slug precisam de isolamento de rota para não colidir.
 - Se você quiser manter `me.vr766.com` como domínio de short links, o painel deve ficar em outro host ou em um prefixo reservado.
 - Se você quiser trocar a chave inicial, basta editar `INITIAL_API_KEY` e recriar o container.
+
+## Guias de produção
+
+- [Checklist de producao para Lovable](docs/lovable/production-checklist.md)
+- [Seção futura para `me.vr766.com`](docs/sections/me-vr766-com.md)
