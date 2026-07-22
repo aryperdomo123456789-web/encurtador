@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Contracts\FreeLinkQuotaRepository;
 use App\Repositories\EloquentFreeLinkQuotaRepository;
+use App\Support\Domains\DomainDnsResolver;
+use App\Support\Domains\SystemDnsResolver;
 use App\Support\Shlink\AnalyticsService;
 use App\Support\Shlink\DomainService;
 use App\Support\Shlink\LinkProvisioner;
@@ -18,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(FreeLinkQuotaRepository::class, EloquentFreeLinkQuotaRepository::class);
+        $this->app->bind(DomainDnsResolver::class, SystemDnsResolver::class);
 
         $this->app->singleton(ShlinkClient::class, function (): ShlinkClient {
             return new ShlinkClient(
