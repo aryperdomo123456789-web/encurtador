@@ -42,7 +42,6 @@ final class LinkController extends Controller
                 options: ['findIfExists' => true],
             );
         } catch (DomainException $e) {
-            // Cota mensal free atingida.
             return redirect()
                 ->route('links.create')
                 ->withInput()
@@ -61,9 +60,11 @@ final class LinkController extends Controller
                 ->withErrors(['long_url' => 'Não foi possível criar o link agora. Tente novamente em instantes.']);
         }
 
+        $shortUrl = $response['shortUrl'] ?? null;
+
         return redirect()
             ->route('links.index')
-            ->with('status', 'Link criado: ' . ($response['shortUrl'] ?? ''))
-            ->with('short_url', $response['short_url'] ?? null);
+            ->with('status', 'Link criado: ' . ($shortUrl ?? ''))
+            ->with('short_url', $shortUrl);
     }
 }
