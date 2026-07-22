@@ -86,6 +86,7 @@ final class DomainController extends Controller
 
     /**
      * Verifica DNS e, se OK, registra o domínio no Shlink e marca como ativo.
+     * Idempotente: se o domínio já estiver ativo e o DNS ainda bater, não chama o Shlink de novo.
      */
     public function verify(Request $request, DomainDnsResolver $resolver, DomainService $domainService, CustomerDomain $customerDomain): RedirectResponse
     {
@@ -96,7 +97,7 @@ final class DomainController extends Controller
             ?: config('panel.custom_domain_dns_target', ''))));
 
         if ($target === '') {
-            return back()->withErrors(['domain' => 'Alvo de DNS não configurado no painel.']);
+            return back()->withErrors(['domain' => 'Alvo de DNS não configurado no painel. Contate o suporte.']);
         }
 
         $resolved = $resolver->resolveTargets($customerDomain->domain);
@@ -104,8 +105,17 @@ final class DomainController extends Controller
             $customerDomain->update(['status' => 'pending_dns']);
             return back()->withErrors([
                 'domain' => 'DNS ainda não aponta para ' . $target . '. Registros encontrados: '
-                    . ($resolved === [] ? 'nenhum' : implode(', ', $resolved)),
+                    . ($resolved === [] ? 'nenhum' : implode(', ', $resolved))
+                    . '. Ajuste o CNAME/A no seu provedor e tente novamente em alguns minutos.',
             ]);
+        }
+
+        // Idempotência: se já estiver ativo e o DNS ainda casa, não chama o Shlink de novo.
+        if ($customerDomain->status === 'active' && $customerDomain->dns_verified_at !== null) {
+            $customerDomain->update(['dns_verified_at' => now()]);
+            return redirect()
+                ->route('domains.index')
+                ->with('status', 'Domínio já está ativo. DNS confirmado novamente.');
         }
 
         try {
@@ -114,7 +124,7 @@ final class DomainController extends Controller
             return back()->withErrors(['domain' => 'Domínio inválido: ' . $e->getMessage()]);
         } catch (Throwable $e) {
             report($e);
-            return back()->withErrors(['domain' => 'Falha ao registrar o domínio no Shlink. Tente novamente em instantes.']);
+            return back()->withErrors(['domain' => 'Falha ao registrar o domínio no Shlink. Tente novamente em alguns instantes.']);
         }
 
         $customerDomain->update([
@@ -127,7 +137,7 @@ final class DomainController extends Controller
 
         return redirect()
             ->route('domains.index')
-            ->with('status', 'Domínio verificado e registrado no Shlink.');
+            ->with('status', 'Domínio verificado e ativo. TLS será emitido automaticamente no primeiro acesso.');
     }
 
     public function destroy(Request $request, CustomerDomain $customerDomain): RedirectResponse
