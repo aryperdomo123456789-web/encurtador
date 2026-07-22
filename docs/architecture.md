@@ -110,3 +110,22 @@ Isso evita duplicar lógica analítica que já existe no Shlink e mantém o pain
 - a camada abaixo já serve como base para ambos;
 - o Shlink será o único responsável pelo redirecionamento final;
 - o painel só provisiona e consulta dados.
+
+## Matriz de responsabilidades por host
+
+Fonte de verdade para separar o motor Shlink, o painel SaaS e o site público. Serve como referência para os itens P0 do backlog em `docs/lovable/checklist.md`.
+
+| Host | Responsabilidade | Fora do escopo |
+|---|---|---|
+| `api-shlink.vr766.com` | Motor Shlink em Docker; expõe API REST consumida pelo painel; recebe hits de redirecionamento quando o hostname do short link aponta para este host. | Regras de negócio, autenticação de usuários, quota, cobrança, UI. |
+| `app.me.vr766.com` | Painel SaaS em Laravel 12 / PHP 8.3; autenticação; provisionamento e leitura via API do Shlink; regras de plano (free vs premium); persistência em MariaDB do painel. | Redirecionamento de slug; emissão de TLS para domínios de cliente. |
+| `me.vr766.com` | Domínio público de slugs curtos e, no futuro, site institucional (`sites/me.vr766.com/`, projeto separado). Encaminha o request ao Shlink para redirecionamento. | Rotas administrativas do painel. |
+| `{cliente}.tld` (CNAME) | Domínio próprio de cliente premium, apontando por CNAME para o hostname público de slugs. TLS emitido pelo proxy reverso (Traefik/Caddy). | Regras de plano; validação de propriedade; UI. |
+
+Regras derivadas:
+
+- rota administrativa **nunca** vive no mesmo host de slugs — evita colisão com short codes;
+- o painel valida o `Host` da requisição via `PANEL_HOST` (`config/panel.php`);
+- o Shlink não emite certificados TLS — quem emite é o proxy reverso;
+- o painel é o único que fala com o banco MariaDB do SaaS;
+- o motor Shlink e o painel não compartilham banco.
