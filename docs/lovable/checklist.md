@@ -14,12 +14,12 @@ Itens que bloqueiam qualquer entrega segura.
 
 | Pri | Status | Item |
 |---|---|---|
-| P0 | [ ] | Travar responsabilidades entre `api-shlink.vr766.com`, `app.me.vr766.com` e `me.vr766.com` |
+| P0 | [x] | Travar responsabilidades entre `api-shlink.vr766.com`, `app.me.vr766.com` e `me.vr766.com` |
 | P0 | [ ] | Garantir que Laravel, MariaDB e variaveis de ambiente sobem sem erro |
-| P0 | [ ] | Garantir que `.env`, logs e arquivos gerados nao sejam versionados |
-| P0 | [ ] | Fechar autenticacao e base do painel |
-| P0 | [ ] | Garantir que a rota administrativa nao colida com slugs publicos |
-| P0 | [ ] | Validar que o fluxo free respeita 5 links por mes e 7 dias de validade |
+| P0 | [x] | Garantir que `.env`, logs e arquivos gerados nao sejam versionados |
+| P0 | [x] | Fechar autenticacao e base do painel |
+| P0 | [x] | Garantir que a rota administrativa nao colida com slugs publicos |
+| P0 | [-] | Validar que o fluxo free respeita 5 links por mes e 7 dias de validade |
 | P0 | [ ] | Confirmar que o motor Shlink sobe isolado em Docker |
 | P0 | [ ] | Garantir que os testes criticos passam antes de liberar qualquer deploy |
 

@@ -22,6 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PORT
                 | Request::HEADER_X_FORWARDED_PROTO,
         );
+
+        // Rotas protegidas pelo middleware `auth` redirecionam visitantes
+        // para o /login do painel em vez de retornar 401/HTML padrão.
+        $middleware->redirectGuestsTo(fn () => route('login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

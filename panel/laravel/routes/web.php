@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\LinkController;
@@ -12,6 +13,17 @@ $panelHost = (string) config('panel.host', '');
 
 $panelRoutes = static function (): void {
     Route::get('/', DashboardController::class)->name('dashboard');
+
+    // Autenticação base do painel (sem Breeze/Fortify por enquanto).
+    // O middleware `guest` evita renderizar /login para quem já está autenticado.
+    Route::middleware('guest')->group(function (): void {
+        Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+        Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
+    });
+
+    Route::post('/logout', [AuthController::class, 'logout'])
+        ->middleware('auth')
+        ->name('logout');
 
     Route::middleware(['auth'])->group(function (): void {
         Route::get('/links', [LinkController::class, 'index'])->name('links.index');
