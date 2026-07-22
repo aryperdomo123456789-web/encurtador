@@ -12,7 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Painel roda atrás de proxy reverso (Traefik/Caddy). Sem isso, o
+        // Laravel não confia nos cabeçalhos X-Forwarded-* e URLs geradas
+        // saem com esquema/host errados.
+        $middleware->trustProxies(
+            at: config('panel.trusted_proxies', '*'),
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
