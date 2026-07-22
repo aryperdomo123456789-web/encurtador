@@ -33,6 +33,10 @@
             <button type="submit">Encurtar</button>
         </form>
 
+        @if (auth()->user()?->isPremium())
+            <p><a href="{{ route('links.premium') }}">Criar link premium (customSlug)</a></p>
+        @endif
+
         <p><a href="{{ route('links.index') }}">Voltar</a></p>
     </main>
 </body>

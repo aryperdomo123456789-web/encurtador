@@ -30,6 +30,10 @@ $panelRoutes = static function (): void {
         Route::get('/links/create', [LinkController::class, 'create'])->name('links.create');
         Route::post('/links', [LinkController::class, 'store'])->name('links.store');
 
+        // Fluxo premium (customSlug). Gate final no controller via isPremium().
+        Route::get('/links/premium', [LinkController::class, 'createPremium'])->name('links.premium');
+        Route::post('/links/premium', [LinkController::class, 'storePremium'])->name('links.premium.store');
+
         Route::get('/domains', [DomainController::class, 'index'])->name('domains.index');
         Route::post('/domains', [DomainController::class, 'store'])->name('domains.store');
 

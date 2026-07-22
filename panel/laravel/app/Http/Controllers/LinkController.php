@@ -67,4 +67,62 @@ final class LinkController extends Controller
             ->with('status', 'Link criado: ' . ($shortUrl ?? ''))
             ->with('short_url', $shortUrl);
     }
+
+    public function createPremium(Request $request): View
+    {
+        abort_unless((bool) optional($request->user())->isPremium(), 403);
+
+        return view('links.premium');
+    }
+
+    /**
+     * Fluxo premium: exige plano ativo com allow_custom_slug.
+     * Aceita long_url + custom_slug (obrigatórios) e valid_until (opcional, <=1 ano).
+     * Domínio próprio e outras regras premium ficam para os próximos itens do P1.
+     */
+    public function storePremium(Request $request, LinkProvisioner $provisioner): RedirectResponse
+    {
+        abort_unless((bool) optional($request->user())->isPremium(), 403);
+
+        $data = $request->validate([
+            'long_url'    => ['required', 'url', 'max:2048'],
+            'custom_slug' => ['required', 'string', 'regex:/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/'],
+            'valid_until' => ['nullable', 'date', 'after:now', 'before:+1 year'],
+        ], [
+            'custom_slug.regex' => 'O slug deve ter 3 a 40 caracteres: letras minúsculas, números e hífens, sem começar ou terminar em hífen.',
+        ]);
+
+        $options = [];
+        if (!empty($data['valid_until'])) {
+            $options['validUntil'] = $data['valid_until'];
+        }
+
+        try {
+            $response = $provisioner->createPremiumLink(
+                userId: (int) $request->user()->id,
+                longUrl: (string) $data['long_url'],
+                customSlug: (string) $data['custom_slug'],
+                options: $options,
+            );
+        } catch (InvalidArgumentException $e) {
+            return redirect()
+                ->route('links.premium')
+                ->withInput()
+                ->withErrors(['custom_slug' => 'Entrada inválida para link premium.']);
+        } catch (Throwable $e) {
+            report($e);
+
+            return redirect()
+                ->route('links.premium')
+                ->withInput()
+                ->withErrors(['custom_slug' => 'Não foi possível criar o link premium. Verifique se o slug está disponível.']);
+        }
+
+        $shortUrl = $response['shortUrl'] ?? null;
+
+        return redirect()
+            ->route('links.index')
+            ->with('status', 'Link premium criado: ' . ($shortUrl ?? ''))
+            ->with('short_url', $shortUrl);
+    }
 }
