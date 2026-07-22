@@ -34,8 +34,11 @@ $panelRoutes = static function (): void {
         Route::get('/links/premium', [LinkController::class, 'createPremium'])->name('links.premium');
         Route::post('/links/premium', [LinkController::class, 'storePremium'])->name('links.premium.store');
 
+        // Domínios próprios. Gate no controller via canUseCustomDomain().
         Route::get('/domains', [DomainController::class, 'index'])->name('domains.index');
         Route::post('/domains', [DomainController::class, 'store'])->name('domains.store');
+        Route::post('/domains/{customerDomain}/verify', [DomainController::class, 'verify'])->name('domains.verify');
+        Route::delete('/domains/{customerDomain}', [DomainController::class, 'destroy'])->name('domains.destroy');
 
         Route::get('/analytics/{shortCode}', [AnalyticsController::class, 'show'])->name('analytics.show');
     });
