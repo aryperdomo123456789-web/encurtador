@@ -8,10 +8,21 @@
 <body>
     <main>
         <h1>Links</h1>
+
         @if (session('status'))
-            <p>{{ session('status') }}</p>
+            <p role="status">{{ session('status') }}</p>
         @endif
-        <a href="{{ route('links.create') }}">Criar link</a>
+
+        @if (session('short_url'))
+            <p>
+                Link curto:
+                <a href="{{ session('short_url') }}" target="_blank" rel="noopener">
+                    {{ session('short_url') }}
+                </a>
+            </p>
+        @endif
+
+        <p><a href="{{ route('links.create') }}">Criar link</a></p>
     </main>
 </body>
 </html>

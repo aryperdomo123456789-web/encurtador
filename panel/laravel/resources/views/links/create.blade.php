@@ -7,31 +7,33 @@
 </head>
 <body>
     <main>
-        <h1>Criar link</h1>
+        <h1>Criar link (gratuito)</h1>
+
+        @if ($errors->any())
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        @endif
+
+        <p>Links gratuitos usam slug aleatório e expiram em 7 dias. Limite: 5 links por mês.</p>
+
         <form method="post" action="{{ route('links.store') }}">
             @csrf
             <label>
                 URL longa
-                <input type="url" name="long_url" required>
+                <input
+                    type="url"
+                    name="long_url"
+                    value="{{ old('long_url') }}"
+                    maxlength="2048"
+                    required>
             </label>
-            <label>
-                Premium
-                <input type="checkbox" name="premium" value="1">
-            </label>
-            <label>
-                Custom slug
-                <input type="text" name="custom_slug">
-            </label>
-            <label>
-                Domínio
-                <input type="text" name="domain" placeholder="me.vr766.com">
-            </label>
-            <label>
-                Expira em
-                <input type="date" name="valid_until">
-            </label>
-            <button type="submit">Salvar</button>
+            <button type="submit">Encurtar</button>
         </form>
+
+        <p><a href="{{ route('links.index') }}">Voltar</a></p>
     </main>
 </body>
 </html>
