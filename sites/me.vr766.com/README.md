@@ -6,6 +6,12 @@ Base reservada para o futuro site ou painel que vai morar em `me.vr766.com`.
 
 Manter este host separado do motor Shlink e organizar aqui tudo que o Lovable precisar para assumir o ambiente depois.
 
+## Caminho recomendado
+
+1. Ler [docs/lovable/README.md](../../docs/lovable/README.md).
+2. Seguir [docs/lovable/checklist.md](../../docs/lovable/checklist.md).
+3. Usar esta pasta como esqueleto do segundo ambiente.
+
 ## Estrutura
 
 ```text

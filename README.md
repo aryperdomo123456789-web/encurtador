@@ -49,5 +49,6 @@ docker compose logs -f shlink
 
 ## Guias de produção
 
+- [Lovable entry point](docs/lovable/README.md)
 - [Checklist de producao para Lovable](docs/lovable/checklist.md)
 - [Seção futura para `me.vr766.com`](docs/sections/me-vr766-com.md)
