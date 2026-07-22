@@ -179,6 +179,32 @@ final class CustomDomainTest extends TestCase
         $this->assertDatabaseMissing('customer_domains', ['id' => $domain->id]);
     }
 
+    public function test_verify_is_idempotent_when_domain_already_active(): void
+    {
+        $user = $this->domainCapableUser();
+        $domain = CustomerDomain::create([
+            'user_id'         => $user->id,
+            'domain'          => 'links.cliente.com',
+            'status'          => 'active',
+            'dns_target'      => 'me.vr766.com',
+            'dns_verified_at' => now()->subDay(),
+            'is_primary'      => false,
+        ]);
+
+        FakeDomainResolver::$targets = ['me.vr766.com'];
+
+        $this->actingAs($user)
+            ->post(route('domains.verify', $domain))
+            ->assertRedirect(route('domains.index'));
+
+        // Shlink não deve ter sido chamado novamente.
+        $this->assertNull(FakeDomainShlink::$lastPath);
+
+        $fresh = $domain->fresh();
+        $this->assertSame('active', $fresh->status);
+        $this->assertNotNull($fresh->dns_verified_at);
+    }
+
     private function domainCapableUser(): User
     {
         $user = User::factory()->create();
