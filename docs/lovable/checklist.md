@@ -29,7 +29,7 @@ Itens essenciais para o produto funcionar de ponta a ponta.
 
 | Pri | Status | Item |
 |---|---|---|
-| P1 | [ ] | Ligar a integracao com Shlink com `X-Api-Key` e `Accept: application/json` |
+| P1 | [-] | Ligar a integracao com Shlink com `X-Api-Key` e `Accept: application/json` |
 | P1 | [ ] | Criar links free com slug aleatorio e expiração de 7 dias |
 | P1 | [ ] | Criar links premium com `customSlug` |
 | P1 | [ ] | Registrar dominio proprio no Shlink depois da validacao |
