@@ -1,0 +1,45 @@
+services:
+  db:
+    image: mariadb:11.4
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u root -p$$MARIADB_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  shlink:
+    image: shlinkio/shlink:stable
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DEFAULT_DOMAIN: ${SHLINK_DEFAULT_DOMAIN}
+      IS_HTTPS_ENABLED: "true"
+      GEOLITE_LICENSE_KEY: ${GEOLITE_LICENSE_KEY}
+      DB_DRIVER: maria
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: 3306
+      INITIAL_API_KEY: ${INITIAL_API_KEY}
+      TRUSTED_PROXIES: 1
+      TIMEZONE: UTC
+    ports:
+      - "127.0.0.1:8080:8080"
+
+volumes:
+  db_data:
