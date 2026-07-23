@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class CustomerDomain extends Model
 {
@@ -28,4 +29,9 @@ final class CustomerDomain extends Model
         'shlink_domain_registered_at' => 'datetime',
         'shlink_domain_payload' => 'array',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }
