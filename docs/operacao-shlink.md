@@ -3,35 +3,85 @@
 ## Estado atual do ambiente
 
 - `api-shlink.vr766.com`: repositório principal do projeto e base do painel Laravel.
-- `app.me.vr766.com`: host ativo do painel, apontando para `panel/laravel/public`.
+- `me.vr766.com`: host ativo do painel e também host dos slugs públicos, com split por caminho na borda.
 - `/www/wwwroot/me.vr766.com`: diretório reservado para o futuro segundo site, hoje sem uso no deploy atual.
 
 ## Endereços
 
 - `api-shlink.vr766.com`: API do Shlink
-- `app.me.vr766.com`: painel administrativo
-- `me.vr766.com`: domínio padrão de slugs da plataforma
-- `slug-host.a-definir`: domínio público alternativo de links, se você quiser separar ainda mais o tráfego
+- `me.vr766.com`: painel administrativo e host oficial dos slugs públicos
+- `slug-host.a-definir`: domínio público alternativo de links, se você quiser separar ainda mais o tráfego no futuro
 
 ## aaPanel / Nginx
 
-Para o painel atual, o document root correto nao e `/www/wwwroot/me.vr766.com`.
-O root deve apontar para o `public` do Laravel dentro do repo:
+Para o painel atual, o `me.vr766.com` precisa receber duas classes de rotas:
+
+- rotas administrativas e assets do Laravel vão para `panel/laravel/public`;
+- qualquer caminho que nao seja do painel vai para o Shlink, para permitir `me.vr766.com/{slug}`.
 
 ```nginx
 server {
     listen 80;
     listen 443 ssl;
     server_name me.vr766.com;
-    root /www/wwwroot/api-shlink.vr766.com/panel/laravel/public;
-    index index.php index.html index.htm;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
+    location = / {
+        proxy_pass http://127.0.0.1:8000;
     }
 
-    location ~ \.php$ {
-        include enable-php-83.conf;
+    location ^~ /healthz {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location ^~ /health/ready {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location ^~ /tls/allow {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location ^~ /login {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location ^~ /logout {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location ^~ /links {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location ^~ /domains {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location ^~ /billing {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location ^~ /analytics {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location ^~ /build {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location ^~ /favicon.ico {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location ^~ /robots.txt {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location ^~ /up {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
     }
 }
 ```
@@ -44,8 +94,7 @@ server {
 
 ### O que precisa existir para nao dar 404 ou 500
 
-- `root` apontando para `panel/laravel/public`;
-- `try_files` redirecionando para `index.php`;
+- `me.vr766.com` com rotas reservadas para o painel e fallback para o Shlink;
 - permissao de escrita em `storage` e `bootstrap/cache`;
 - banco SQLite ou MariaDB com permissão correta;
 - migrations aplicadas;
@@ -98,8 +147,8 @@ Se no futuro o host `me.vr766.com` virar um projeto separado, ai sim o docroot p
 
 No deploy com `compose.prod.yml`, a borda faz a divisão por host:
 
-- `app.me.vr766.com` vai para o painel Laravel;
-- `me.vr766.com/{slug}` e qualquer `dominio-do-cliente.tld/{slug}` vão direto para o Shlink;
+- `me.vr766.com` envia as rotas administrativas ao Laravel e todo o resto ao Shlink;
+- qualquer `dominio-do-cliente.tld/{slug}` vai direto para o Shlink;
 - o Caddy consulta `/tls/allow` no painel antes de emitir certificados on-demand para domínios de cliente.
 
 ## O que o painel faz

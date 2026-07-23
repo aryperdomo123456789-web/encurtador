@@ -43,7 +43,7 @@ docker compose logs -f shlink
 
 - `GEOLITE_LICENSE_KEY` está vazio por padrão, então a geolocalização de visitas fica desativada até você preencher essa chave.
 - O Shlink deve ficar isolado do painel administrativo.
-- O painel administrativo deve ficar em `app.me.vr766.com`.
+- O painel administrativo fica em `me.vr766.com`.
 - `me.vr766.com/{slug}` e domínios de cliente vão direto para o Shlink no proxy reverso.
 - Se você quiser trocar a chave inicial, basta editar `INITIAL_API_KEY` e recriar o container.
 

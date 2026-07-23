@@ -1,12 +1,11 @@
 {
-	email {$CADDY_EMAIL}
+	on_demand_tls {
+		ask http://panel:8000/tls/allow?domain={host}
+	}
 }
 
 (proxy_headers) {
 	header_up Host {host}
-	header_up X-Forwarded-Host {host}
-	header_up X-Forwarded-Proto {scheme}
-	header_up X-Forwarded-For {remote_host}
 	header_up X-Real-IP {remote_host}
 }
 
@@ -14,9 +13,19 @@ http:// {
 	redir https://{host}{uri} permanent
 }
 
-app.me.vr766.com {
-	reverse_proxy panel:8000 {
-		import proxy_headers
+me.vr766.com {
+	@panel_paths path / /healthz /health/ready /tls/allow /login* /logout* /links* /domains* /analytics* /billing* /build* /favicon.ico /robots.txt /storage* /up
+
+	handle @panel_paths {
+		reverse_proxy panel:8000 {
+			import proxy_headers
+		}
+	}
+
+	handle {
+		reverse_proxy shlink:8080 {
+			import proxy_headers
+		}
 	}
 }
 

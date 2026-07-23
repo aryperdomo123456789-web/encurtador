@@ -42,7 +42,7 @@ duplicatas sao ignoradas.
 ## Como testar localmente
 
 1. Instale `stripe/stripe-cli`.
-2. `stripe listen --forward-to https://app.me.vr766.com/billing/webhook`
+2. `stripe listen --forward-to https://me.vr766.com/billing/webhook`
 3. Copie o `whsec_...` mostrado para `STRIPE_WEBHOOK_SECRET`.
 4. `stripe trigger checkout.session.completed` para simular.
 
@@ -56,4 +56,5 @@ duplicatas sao ignoradas.
 
 `User::isPremium()` continua sendo a unica fonte de gating para
 custom slug, dominio proprio e cota ilimitada. O webhook e o unico
-componente autorizado a mudar `users.plan` entre `free` e `premium`.
+componente autorizado a manter o estado de assinatura em `subscriptions`
+e `stripe_customer_id`.

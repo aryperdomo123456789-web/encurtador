@@ -12,7 +12,7 @@ return [
     | painel do host público de slugs (motor Shlink), evitando que caminhos
     | como /login, /links ou /domains colidam com short codes.
     |
-    | - Em produção, o padrão do projeto é `app.me.vr766.com`.
+    | - Em produção, o padrão do projeto é `me.vr766.com`.
     | - Em desenvolvimento local, defina `PANEL_HOST=` (vazio) no `.env`
     |   para desativar o domain guard e servir o painel em qualquer host.
     |
@@ -20,7 +20,7 @@ return [
 
     'host' => env(
         'PANEL_HOST',
-        env('APP_ENV', 'local') === 'testing' ? '' : 'app.me.vr766.com'
+        env('APP_ENV', 'local') === 'testing' ? '' : 'me.vr766.com'
     ),
 
     /*
