@@ -14,7 +14,7 @@ Itens que bloqueiam qualquer entrega segura.
 
 | Pri | Status | Item |
 |---|---|---|
-| P0 | [x] | Travar responsabilidades entre `api-shlink.vr766.com`, `me.vr766.com` e o host público de slugs |
+| P0 | [x] | Travar responsabilidades entre `api-shlink.vr766.com`, `me.vr766.com` e o host publico de slugs |
 | P0 | [ ] | Garantir que Laravel, MariaDB e variaveis de ambiente sobem sem erro |
 | P0 | [x] | Garantir que `.env`, logs e arquivos gerados nao sejam versionados |
 | P0 | [x] | Fechar autenticacao e base do painel |
@@ -30,13 +30,13 @@ Itens essenciais para o produto funcionar de ponta a ponta.
 | Pri | Status | Item |
 |---|---|---|
 | P1 | [x] | Ligar a integracao com Shlink com `X-Api-Key` e `Accept: application/json` |
-| P1 | [x] | Criar links free com slug aleatorio e expiração de 7 dias |
+| P1 | [x] | Criar links free com slug aleatorio e expiracao de 7 dias |
 | P1 | [x] | Criar links premium com `customSlug` |
 | P1 | [x] | Registrar dominio proprio no Shlink depois da validacao |
 | P1 | [ ] | Consultar visitas e analytics no painel |
 | P1 | [ ] | Entregar dashboard, lista de links e tela de criacao |
 | P1 | [ ] | Entregar telas de dominios e metricas |
-| P1 | [ ] | Definir proxy reverso e TLS automatico para dominios de clientes |
+| P1 | [x] | Definir proxy reverso e TLS automatico para dominios de clientes |
 
 ## Prioridade P2
 
