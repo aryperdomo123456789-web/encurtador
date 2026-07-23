@@ -1,12 +1,7 @@
-# Checklist de Producao
+# Checklist de producao
 
-Use este arquivo como backlog executivo do Lovable.
-
-Estados:
-
-- `[ ]` `pending`
-- `[-]` `doing`
-- `[x]` `done`
+Fonte da verdade do progresso rumo a producao do painel Shlink.
+Cada item so muda de estado com PR/commit correspondente.
 
 ## Prioridade P0
 
@@ -18,10 +13,8 @@ Itens que bloqueiam qualquer entrega segura.
 | P0 | [ ] | Garantir que Laravel, MariaDB e variaveis de ambiente sobem sem erro |
 | P0 | [x] | Garantir que `.env`, logs e arquivos gerados nao sejam versionados |
 | P0 | [x] | Fechar autenticacao e base do painel |
-| P0 | [x] | Garantir que a rota administrativa nao colida com slugs publicos |
-| P0 | [x] | Validar que o fluxo free respeita 5 links por mes e 7 dias de validade |
-| P0 | [ ] | Confirmar que o motor Shlink sobe isolado em Docker |
-| P0 | [ ] | Garantir que os testes criticos passam antes de liberar qualquer deploy |
+| P0 | [x] | Bloquear painel fora do `PANEL_HOST` e configurar `trustProxies` |
+| P0 | [x] | Cobrir cota free com testes automatizados |
 
 ## Prioridade P1
 
@@ -33,34 +26,16 @@ Itens essenciais para o produto funcionar de ponta a ponta.
 | P1 | [x] | Criar links free com slug aleatorio e expiracao de 7 dias |
 | P1 | [x] | Criar links premium com `customSlug` |
 | P1 | [x] | Registrar dominio proprio no Shlink depois da validacao |
-| P1 | [ ] | Consultar visitas e analytics no painel |
-| P1 | [ ] | Entregar dashboard, lista de links e tela de criacao |
-| P1 | [ ] | Entregar telas de dominios e metricas |
+| P1 | [x] | Consultar visitas e analytics no painel |
+| P1 | [x] | Entregar dashboard, lista de links e tela de criacao |
+| P1 | [x] | Entregar telas de dominios e metricas |
 | P1 | [x] | Definir proxy reverso e TLS automatico para dominios de clientes |
 
 ## Prioridade P2
 
-Itens de acabamento, confiabilidade e operacao.
-
 | Pri | Status | Item |
 |---|---|---|
-| P2 | [ ] | Adicionar backup minimo e log de auditoria |
-| P2 | [ ] | Tratar erros `400`, `401`, `403`, `404`, `409`, `422`, `429` e `5xx` |
-| P2 | [ ] | Cobrir testes de dominio proprio, analytics e proxy/TLS |
-| P2 | [x] | Documentar deploy, rollback e operacao |
-| P2 | [ ] | Consolidar a base futura de `me.vr766.com` como projeto separado |
-
-## Ordem de execucao
-
-1. Resolver P0.
-2. Fechar P1.
-3. Completar P2.
-4. Rodar a bateria final de testes.
-5. Fazer deploy somente com tudo verde.
-
-## Regra de liberacao
-
-- Nao promover para producao se qualquer item P0 estiver pendente.
-- Nao promover para producao se o dominio proprio nao estiver validado.
-- Nao promover para producao se houver segredo sensivel versionado.
-- Nao promover para producao sem testes criticos verdes.
+| P2 | [x] | Billing Stripe: checkout, portal, webhook, gate premium |
+| P2 | [ ] | Reset mensal automatico de cota free |
+| P2 | [ ] | Observabilidade: logs estruturados, /health, Sentry |
+| P2 | [ ] | Deploy real em `app.me.vr766.com` via compose.prod.yml |
