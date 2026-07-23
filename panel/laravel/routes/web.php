@@ -27,6 +27,7 @@ $panelRoutes = static function (): void {
         Route::get('/links', [LinkController::class, 'index'])->name('links.index');
         Route::get('/links/create', [LinkController::class, 'create'])->name('links.create');
         Route::post('/links', [LinkController::class, 'store'])->name('links.store');
+        Route::delete('/links/{link}', [LinkController::class, 'destroy'])->name('links.destroy');
 
         Route::get('/links/premium', [LinkController::class, 'createPremium'])->name('links.premium');
         Route::post('/links/premium', [LinkController::class, 'storePremium'])->name('links.premium.store');
