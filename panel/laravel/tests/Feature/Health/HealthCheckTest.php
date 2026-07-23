@@ -2,11 +2,16 @@
 
 namespace Tests\Feature\Health;
 
+use App\Models\CustomerDomain;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class HealthCheckTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_liveness_endpoint_responde_ok(): void
     {
         $response = $this->get('/healthz');
@@ -57,5 +62,29 @@ class HealthCheckTest extends TestCase
         $response = $this->withHeaders(['X-Request-Id' => $id])->get('/healthz');
 
         $this->assertSame($id, $response->headers->get('X-Request-Id'));
+    }
+
+    public function test_tls_allow_endpoint_rejects_unknown_domain(): void
+    {
+        $response = $this->get('/tls/allow?domain=unknown.example');
+
+        $response->assertForbidden();
+    }
+
+    public function test_tls_allow_endpoint_accepts_registered_customer_domain(): void
+    {
+        $user = User::factory()->create();
+        CustomerDomain::query()->create([
+            'user_id' => $user->id,
+            'domain' => 'links.cliente.com',
+            'status' => 'active',
+            'dns_target' => 'me.vr766.com',
+            'tls_mode' => 'on_demand',
+            'tls_status' => 'pending',
+        ]);
+
+        $response = $this->get('/tls/allow?domain=links.cliente.com');
+
+        $response->assertNoContent();
     }
 }

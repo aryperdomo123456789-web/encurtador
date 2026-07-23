@@ -134,7 +134,7 @@ final class StripeWebhookController extends Controller
 
     private function activatePremium(User $user, string $subscriptionId, string $eventId): void
     {
-        $premium = Plan::query()->where('slug', 'premium')->first();
+        $premium = Plan::query()->where('code', 'premium')->first();
         if ($premium === null) {
             Log::error('billing.webhook.premium_plan_missing');
             return;
@@ -148,28 +148,27 @@ final class StripeWebhookController extends Controller
             [
                 'plan_id'                => $premium->id,
                 'status'                 => 'active',
+                'provider_customer_id'   => $user->stripe_customer_id,
+                'provider_subscription_id' => $subscriptionId ?: null,
                 'stripe_subscription_id' => $subscriptionId ?: null,
                 'stripe_event_id'        => $eventId ?: null,
-                'current_period_end_at'  => null,
+                'current_period_end'     => null,
             ]
         );
-
-        $user->forceFill(['plan' => 'premium'])->save();
     }
 
     private function revertToFree(User $user, string $subscriptionId, string $eventId): void
     {
-        $free = Plan::query()->where('slug', 'free')->first();
+        $free = Plan::query()->where('code', 'free')->first();
 
         Subscription::query()
             ->where('user_id', $user->id)
             ->where('provider', 'stripe')
             ->update([
-                'plan_id'          => $free?->id,
-                'status'           => 'canceled',
-                'stripe_event_id'  => $eventId ?: null,
+                'plan_id'                  => $free?->id,
+                'status'                   => 'canceled',
+                'stripe_subscription_id'    => $subscriptionId ?: null,
+                'stripe_event_id'          => $eventId ?: null,
             ]);
-
-        $user->forceFill(['plan' => 'free'])->save();
     }
 }

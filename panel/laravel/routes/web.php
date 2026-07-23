@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnalyticsController;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DomainController;
@@ -14,6 +14,7 @@ $panelHost = (string) config('panel.host', '');
 
 // Endpoints de saude ficam fora do domain guard para permitir monitoramento
 // externo (uptime, orquestrador, balanceador) sem depender do PANEL_HOST.
+Route::get('/tls/allow', [HealthController::class, 'tlsAllow'])->name('tls.allow');
 Route::get('/healthz', [HealthController::class, 'live'])->name('health.live');
 Route::get('/health/ready', [HealthController::class, 'ready'])->name('health.ready');
 

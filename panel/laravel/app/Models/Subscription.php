@@ -15,6 +15,8 @@ final class Subscription extends Model
         'provider',
         'provider_customer_id',
         'provider_subscription_id',
+        'stripe_subscription_id',
+        'stripe_event_id',
         'status',
         'current_period_start',
         'current_period_end',

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains;
 
 use App\Models\CustomerDomain;
+use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -16,7 +18,7 @@ final class TlsProbeTest extends TestCase
 
     public function test_probe_marks_domain_active_on_https_success(): void
     {
-        $user = User::factory()->create(['plan' => 'premium']);
+        $user = $this->premiumUser();
         $domain = CustomerDomain::create([
             'user_id'    => $user->id,
             'domain'     => 'links.cliente.com',
@@ -38,7 +40,7 @@ final class TlsProbeTest extends TestCase
 
     public function test_probe_keeps_pending_on_ssl_error(): void
     {
-        $user = User::factory()->create(['plan' => 'premium']);
+        $user = $this->premiumUser();
         $domain = CustomerDomain::create([
             'user_id'    => $user->id,
             'domain'     => 'links.cliente.com',
@@ -59,7 +61,7 @@ final class TlsProbeTest extends TestCase
 
     public function test_tls_endpoint_rejects_domain_not_active(): void
     {
-        $user = User::factory()->create(['plan' => 'premium']);
+        $user = $this->premiumUser();
         $domain = CustomerDomain::create([
             'user_id'    => $user->id,
             'domain'     => 'links.cliente.com',
@@ -71,5 +73,38 @@ final class TlsProbeTest extends TestCase
         $this->actingAs($user)
             ->post(route('domains.tls', $domain))
             ->assertSessionHasErrors('domain');
+    }
+
+    private function premiumUser(): User
+    {
+        $user = User::factory()->create();
+
+        $plan = Plan::create([
+            'code'                    => 'pro-' . uniqid('', true),
+            'name'                    => 'Pro',
+            'description'             => 'Plano premium para testes',
+            'is_free'                 => false,
+            'monthly_short_url_limit' => 0,
+            'allow_custom_slug'       => true,
+            'allow_custom_domain'     => true,
+            'allow_custom_expiration' => true,
+            'allow_lifetime_links'    => true,
+            'is_active'               => true,
+        ]);
+
+        Subscription::create([
+            'user_id'                  => $user->id,
+            'plan_id'                  => $plan->id,
+            'provider'                 => 'test',
+            'provider_customer_id'     => 'cus_' . uniqid('', true),
+            'provider_subscription_id' => 'sub_' . uniqid('', true),
+            'status'                   => 'active',
+            'current_period_start'     => now(),
+            'current_period_end'       => now()->addMonth(),
+            'cancel_at_period_end'     => false,
+            'metadata'                 => [],
+        ]);
+
+        return $user->fresh();
     }
 }

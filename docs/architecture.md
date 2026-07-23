@@ -10,9 +10,14 @@ A solução foi desenhada em três camadas independentes:
    - também recebe os acessos de redirecionamento quando o hostname do short link aponta para este host.
 
 2. `me.vr766.com`
-   - é o host atualmente em uso pelo painel administrativo;
-   - no desenho atual, ele atende a interface do SaaS;
-   - o domínio público de slugs ainda precisa ser decidido para não competir com rotas administrativas.
+   - é o domínio padrão de slugs do shortener;
+   - quando um link aponta para `me.vr766.com/{slug}`, o Shlink faz o redirect final;
+   - domínios de cliente também apontam por CNAME para a borda que entrega o Shlink.
+
+2. `app.me.vr766.com`
+   - é o host administrativo do painel SaaS;
+   - atende autenticação, billing, cadastro de domínios e criação de links;
+   - não compete com rotas de redirecionamento.
 
 3. Banco MariaDB do painel
    - guarda usuários, planos, assinaturas, domínios, quota mensal e espelho operacional dos links.
@@ -23,10 +28,11 @@ Existe uma restrição prática importante:
 
 - se o mesmo host servir painel e short links no mesmo nível de caminho, rotas como `/login`, `/dashboard` e `/slug` podem colidir;
 - por isso, o desenho mais seguro é:
-  - `me.vr766.com` como host atualmente em uso pelo painel;
-  - o host público de slugs precisa ser definido separadamente para não colidir com rotas administrativas.
+  - `app.me.vr766.com` para o painel administrativo;
+  - `me.vr766.com` para slugs públicos do Shlink;
+  - domínios de clientes encaminhados pela borda diretamente ao Shlink.
 
-Se você quiser reutilizar `me.vr766.com` como domínio de slug no futuro, o painel precisará sair da árvore de rotas reservada ao Shlink. Na prática, isso significa usar um prefixo fixo bem protegido ou outro host separado.
+Se você quiser mover o painel para outro host no futuro, o `app.me.vr766.com` pode ser trocado sem mexer na topologia de slugs.
 
 ## Fluxo de criação de link gratuito
 
@@ -118,7 +124,8 @@ Fonte de verdade para separar o motor Shlink, o painel SaaS e o site público. S
 | Host | Responsabilidade | Fora do escopo |
 |---|---|---|
 | `api-shlink.vr766.com` | Motor Shlink em Docker; expõe API REST consumida pelo painel; recebe hits de redirecionamento quando o hostname do short link aponta para este host. | Regras de negócio, autenticação de usuários, quota, cobrança, UI. |
-| `me.vr766.com` | Host atualmente em uso pelo painel SaaS em Laravel 12 / PHP 8.3; autenticação; provisionamento e leitura via API do Shlink; regras de plano (free vs premium); persistência em MariaDB do painel. | Redirecionamento de slug; emissão de TLS para domínios de cliente. |
+| `app.me.vr766.com` | Host administrativo do painel SaaS em Laravel 12 / PHP 8.3; autenticação; provisionamento e leitura via API do Shlink; regras de plano (free vs premium); persistência em MariaDB do painel. | Redirecionamento de slug; emissão de TLS para domínios de cliente. |
+| `me.vr766.com` | Host público de slugs do Shlink. | UI administrativa, cobrança, cadastro de usuário. |
 | `slug-host.a-definir` | Domínio público de slugs curtos. Encaminha o request ao Shlink para redirecionamento. | Rotas administrativas do painel. |
 | `{cliente}.tld` (CNAME) | Domínio próprio de cliente premium, apontando por CNAME para o hostname público de slugs. TLS emitido pelo proxy reverso (Traefik/Caddy). | Regras de plano; validação de propriedade; UI. |
 

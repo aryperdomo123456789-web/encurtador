@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 final class MonthlyQuotaUsage extends Model
 {
+    protected $table = 'monthly_quota_usage';
+
     protected $fillable = [
         'user_id',
         'quota_month',

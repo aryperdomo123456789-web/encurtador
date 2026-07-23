@@ -1,0 +1,31 @@
+{
+	email {$CADDY_EMAIL}
+}
+
+(proxy_headers) {
+	header_up Host {host}
+	header_up X-Forwarded-Host {host}
+	header_up X-Forwarded-Proto {scheme}
+	header_up X-Forwarded-For {remote_host}
+	header_up X-Real-IP {remote_host}
+}
+
+http:// {
+	redir https://{host}{uri} permanent
+}
+
+app.me.vr766.com {
+	reverse_proxy panel:8000 {
+		import proxy_headers
+	}
+}
+
+https:// {
+	tls {
+		on_demand
+	}
+
+	reverse_proxy shlink:8080 {
+		import proxy_headers
+	}
+}

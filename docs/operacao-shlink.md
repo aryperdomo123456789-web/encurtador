@@ -3,14 +3,15 @@
 ## Estado atual do ambiente
 
 - `api-shlink.vr766.com`: repositório principal do projeto e base do painel Laravel.
-- `me.vr766.com`: host ativo do painel, apontando para `panel/laravel/public`.
+- `app.me.vr766.com`: host ativo do painel, apontando para `panel/laravel/public`.
 - `/www/wwwroot/me.vr766.com`: diretório reservado para o futuro segundo site, hoje sem uso no deploy atual.
 
 ## Endereços
 
 - `api-shlink.vr766.com`: API do Shlink
-- `me.vr766.com`: painel administrativo atualmente em uso
-- `slug-host.a-definir`: domínio público de links, se você quiser evitar colisão de rotas
+- `app.me.vr766.com`: painel administrativo
+- `me.vr766.com`: domínio padrão de slugs da plataforma
+- `slug-host.a-definir`: domínio público alternativo de links, se você quiser separar ainda mais o tráfego
 
 ## aaPanel / Nginx
 
@@ -92,6 +93,14 @@ Se no futuro o host `me.vr766.com` virar um projeto separado, ai sim o docroot p
 - valida domínio e slug;
 - guarda visitas;
 - expõe relatórios via API.
+
+## Roteamento de produção
+
+No deploy com `compose.prod.yml`, a borda faz a divisão por host:
+
+- `app.me.vr766.com` vai para o painel Laravel;
+- `me.vr766.com/{slug}` e qualquer `dominio-do-cliente.tld/{slug}` vão direto para o Shlink;
+- o Caddy consulta `/tls/allow` no painel antes de emitir certificados on-demand para domínios de cliente.
 
 ## O que o painel faz
 

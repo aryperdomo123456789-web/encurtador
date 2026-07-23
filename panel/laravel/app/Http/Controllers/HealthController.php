@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomerDomain;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Response;
 use Throwable;
 
 /**
@@ -24,6 +26,32 @@ class HealthController extends Controller
             'service' => 'panel',
             'time' => now()->toIso8601String(),
         ]);
+    }
+
+    /**
+     * Autoriza emissao on-demand de TLS pelo proxy reverso.
+     *
+     * O Caddy/Traefik consulta este endpoint antes de emitir o certificado.
+     * Permitimos o dominio padrao de slugs e qualquer dominio cadastrado no
+     * painel. Hosts reservados do painel continuam fora desse fluxo.
+     */
+    public function tlsAllow(\Illuminate\Http\Request $request): Response
+    {
+        $domain = strtolower(trim((string) $request->query('domain', '')));
+        $reserved = array_filter([
+            strtolower((string) config('panel.host', '')),
+            strtolower((string) config('shlink.default_domain', '')),
+        ]);
+
+        $allowed = $domain !== ''
+            && (
+                in_array($domain, $reserved, true)
+                || CustomerDomain::query()->where('domain', $domain)->exists()
+            );
+
+        abort_unless($allowed, 403);
+
+        return response()->noContent();
     }
 
     public function ready(): JsonResponse

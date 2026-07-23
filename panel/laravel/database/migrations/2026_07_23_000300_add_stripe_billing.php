@@ -35,28 +35,36 @@ return new class extends Migration
         // Semeia planos free/premium (idempotente).
         $now = now();
         DB::table('plans')->updateOrInsert(
-            ['slug' => 'free'],
+            ['code' => 'free'],
             [
-                'name'            => 'Free',
-                'stripe_price_id' => null,
-                'monthly_link_quota' => 5,
-                'allow_custom_slug'  => false,
-                'allow_custom_domain'=> false,
-                'link_expiration_days' => 7,
+                'name'                  => 'Free',
+                'description'           => 'Plano gratuito com cota mensal e expiração curta.',
+                'is_free'               => true,
+                'monthly_short_url_limit' => 5,
+                'allow_custom_slug'     => false,
+                'allow_custom_domain'   => false,
+                'allow_custom_expiration' => false,
+                'allow_lifetime_links'  => false,
+                'is_active'             => true,
+                'stripe_price_id'       => null,
                 'updated_at' => $now,
                 'created_at' => $now,
             ]
         );
 
         DB::table('plans')->updateOrInsert(
-            ['slug' => 'premium'],
+            ['code' => 'premium'],
             [
-                'name'            => 'Premium',
-                'stripe_price_id' => env('STRIPE_PREMIUM_PRICE_ID'),
-                'monthly_link_quota' => 0, // 0 = ilimitado
-                'allow_custom_slug'  => true,
-                'allow_custom_domain'=> true,
-                'link_expiration_days' => 0,
+                'name'                  => 'Premium',
+                'description'           => 'Plano premium com slug customizado e dominio proprio.',
+                'is_free'               => false,
+                'monthly_short_url_limit' => null,
+                'allow_custom_slug'     => true,
+                'allow_custom_domain'   => true,
+                'allow_custom_expiration' => true,
+                'allow_lifetime_links'  => true,
+                'is_active'             => true,
+                'stripe_price_id'       => env('STRIPE_PREMIUM_PRICE_ID'),
                 'updated_at' => $now,
                 'created_at' => $now,
             ]
