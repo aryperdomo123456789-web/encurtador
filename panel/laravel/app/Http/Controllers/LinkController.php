@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\ShortLink;
 use App\Support\Shlink\LinkProvisioner;
+use App\Support\Shlink\ShlinkClient;
+use Carbon\Carbon;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,9 +17,30 @@ use Throwable;
 
 final class LinkController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        return view('links.index');
+        $query = ShortLink::where('user_id', $request->user()->id);
+
+        if ($q = $request->string('q')->trim()->toString()) {
+            $query->where(function ($w) use ($q) {
+                $w->where('shlink_short_code', 'like', "%{$q}%")
+                    ->orWhere('long_url', 'like', "%{$q}%");
+            });
+        }
+
+        $filter = $request->string('filter')->toString();
+        if ($filter === 'free') {
+            $query->where('is_free_link', true);
+        } elseif ($filter === 'premium') {
+            $query->where('is_free_link', false);
+        } elseif ($filter === 'expiring') {
+            $query->whereNotNull('valid_until')
+                ->whereBetween('valid_until', [Carbon::now(), Carbon::now()->addDays(3)]);
+        }
+
+        $links = $query->orderByDesc('created_at')->paginate(20)->withQueryString();
+
+        return view('links.index', compact('links'));
     }
 
     public function create(): View
@@ -24,11 +48,6 @@ final class LinkController extends Controller
         return view('links.create');
     }
 
-    /**
-     * Fluxo free: aceita apenas long_url. Slug aleatório e expiração de 7 dias
-     * são derivados no servidor pelo LinkProvisioner. Campos como custom_slug,
-     * domain e valid_until são ignorados nesta rota (uso premium virá depois).
-     */
     public function store(Request $request, LinkProvisioner $provisioner): RedirectResponse
     {
         $data = $request->validate([
@@ -42,44 +61,45 @@ final class LinkController extends Controller
                 options: ['findIfExists' => true],
             );
         } catch (DomainException $e) {
-            return redirect()
-                ->route('links.create')
-                ->withInput()
+            return redirect()->route('links.create')->withInput()
                 ->withErrors(['long_url' => 'Limite mensal de links gratuitos atingido. Faça upgrade para continuar.']);
         } catch (InvalidArgumentException $e) {
-            return redirect()
-                ->route('links.create')
-                ->withInput()
+            return redirect()->route('links.create')->withInput()
                 ->withErrors(['long_url' => 'Entrada inválida para link gratuito.']);
         } catch (Throwable $e) {
             report($e);
-
-            return redirect()
-                ->route('links.create')
-                ->withInput()
+            return redirect()->route('links.create')->withInput()
                 ->withErrors(['long_url' => 'Não foi possível criar o link agora. Tente novamente em instantes.']);
         }
 
         $shortUrl = $response['shortUrl'] ?? null;
 
-        return redirect()
-            ->route('links.index')
+        return redirect()->route('links.index')
             ->with('status', 'Link criado: ' . ($shortUrl ?? ''))
             ->with('short_url', $shortUrl);
+    }
+
+    public function destroy(Request $request, ShortLink $link, ShlinkClient $shlink): RedirectResponse
+    {
+        abort_if($link->user_id !== $request->user()->id, 403);
+
+        try {
+            $shlink->deleteShortUrl($link->shlink_short_code);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        $link->delete();
+
+        return redirect()->route('links.index')->with('status', 'Link excluído.');
     }
 
     public function createPremium(Request $request): View
     {
         abort_unless((bool) optional($request->user())->isPremium(), 403);
-
         return view('links.premium');
     }
 
-    /**
-     * Fluxo premium: exige plano ativo com allow_custom_slug.
-     * Aceita long_url + custom_slug (obrigatórios) e valid_until (opcional, <=1 ano).
-     * Domínio próprio e outras regras premium ficam para os próximos itens do P1.
-     */
     public function storePremium(Request $request, LinkProvisioner $provisioner): RedirectResponse
     {
         abort_unless((bool) optional($request->user())->isPremium(), 403);
@@ -105,23 +125,17 @@ final class LinkController extends Controller
                 options: $options,
             );
         } catch (InvalidArgumentException $e) {
-            return redirect()
-                ->route('links.premium')
-                ->withInput()
+            return redirect()->route('links.premium')->withInput()
                 ->withErrors(['custom_slug' => 'Entrada inválida para link premium.']);
         } catch (Throwable $e) {
             report($e);
-
-            return redirect()
-                ->route('links.premium')
-                ->withInput()
+            return redirect()->route('links.premium')->withInput()
                 ->withErrors(['custom_slug' => 'Não foi possível criar o link premium. Verifique se o slug está disponível.']);
         }
 
         $shortUrl = $response['shortUrl'] ?? null;
 
-        return redirect()
-            ->route('links.index')
+        return redirect()->route('links.index')
             ->with('status', 'Link premium criado: ' . ($shortUrl ?? ''))
             ->with('short_url', $shortUrl);
     }
