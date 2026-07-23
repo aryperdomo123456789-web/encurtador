@@ -1,0 +1,56 @@
+server
+{
+    listen 80;
+    listen 443 ssl;
+    listen 443 quic;
+    http2 on;
+    http3 on;
+    server_name me.vr766.com;
+
+    ssl_certificate    /www/server/panel/vhost/cert/me.vr766.com/fullchain.pem;
+    ssl_certificate_key    /www/server/panel/vhost/cert/me.vr766.com/privkey.pem;
+
+    include /www/server/panel/vhost/nginx/well-known/me.vr766.com.conf;
+
+    location = / {
+        proxy_pass http://127.0.0.1:8001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Request-Id $http_x_request_id;
+    }
+
+    location ^~ /healthz { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /health/ready { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /tls/allow { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /login { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /logout { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /links { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /domains { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /billing { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /analytics { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /build/ { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /storage/ { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /favicon.ico { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /robots.txt { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /up { proxy_pass http://127.0.0.1:8001; }
+
+    location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md)
+    {
+        return 404;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Request-Id $http_x_request_id;
+    }
+}
