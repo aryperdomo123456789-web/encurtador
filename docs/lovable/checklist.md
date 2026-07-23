@@ -10,7 +10,7 @@ Itens que bloqueiam qualquer entrega segura.
 | Pri | Status | Item |
 |---|---|---|
 | P0 | [x] | Travar responsabilidades entre `api-shlink.vr766.com`, `me.vr766.com` e o host publico de slugs |
-| P0 | [ ] | Garantir que Laravel, MariaDB e variaveis de ambiente sobem sem erro |
+| P0 | [x] | Garantir que Laravel, MariaDB e variaveis de ambiente sobem sem erro |
 | P0 | [x] | Garantir que `.env`, logs e arquivos gerados nao sejam versionados |
 | P0 | [x] | Fechar autenticacao e base do painel |
 | P0 | [x] | Bloquear painel fora do `PANEL_HOST` e configurar `trustProxies` |
