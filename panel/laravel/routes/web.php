@@ -1,12 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
 use App\Http\Controllers\AnalyticsController;
-use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\LinkController;
+use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 $panelHost = (string) config('panel.host', '');
@@ -19,12 +19,12 @@ $panelRoutes = static function (): void {
         Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
     });
 
-    Route::post('/logout', [AuthController::class, 'logout'])
-        ->middleware('auth')
-        ->name('logout');
+    Route::middleware('auth')->group(function (): void {
+        Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::middleware(['auth'])->group(function (): void {
         Route::get('/links', [LinkController::class, 'index'])->name('links.index');
+        Route::delete('/links/{link}', [LinkController::class, 'destroy'])->name('links.destroy');
+
         Route::get('/links/create', [LinkController::class, 'create'])->name('links.create');
         Route::post('/links', [LinkController::class, 'store'])->name('links.store');
 
@@ -38,7 +38,17 @@ $panelRoutes = static function (): void {
         Route::delete('/domains/{customerDomain}', [DomainController::class, 'destroy'])->name('domains.destroy');
 
         Route::get('/analytics/{shortCode}', [AnalyticsController::class, 'show'])->name('analytics.show');
+
+        // Billing (Stripe). Estado real e atualizado pelo webhook.
+        Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+        Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
+        Route::post('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
+        Route::get('/billing/success', [BillingController::class, 'success'])->name('billing.success');
+        Route::get('/billing/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
     });
+
+    // Webhook Stripe (publico, autenticado via HMAC).
+    Route::post('/billing/webhook', [StripeWebhookController::class, 'handle'])->name('billing.webhook');
 };
 
 if ($panelHost !== '') {
