@@ -7,9 +7,15 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\LinkController;
+use App\Http\Controllers\TlsAllowController;
 use Illuminate\Support\Facades\Route;
 
 $panelHost = (string) config('panel.host', '');
+
+// Endpoint público consultado pelo proxy reverso (Caddy on_demand_tls "ask").
+// Fica fora do domain guard para responder em qualquer host, já que o Caddy
+// resolve via nome interno do serviço.
+Route::get('/api/tls/allow', [TlsAllowController::class, 'allow'])->name('api.tls.allow');
 
 $panelRoutes = static function (): void {
     Route::get('/', DashboardController::class)->name('dashboard');
@@ -38,6 +44,7 @@ $panelRoutes = static function (): void {
         Route::get('/domains', [DomainController::class, 'index'])->name('domains.index');
         Route::post('/domains', [DomainController::class, 'store'])->name('domains.store');
         Route::post('/domains/{customerDomain}/verify', [DomainController::class, 'verify'])->name('domains.verify');
+        Route::post('/domains/{customerDomain}/tls', [DomainController::class, 'tls'])->name('domains.tls');
         Route::delete('/domains/{customerDomain}', [DomainController::class, 'destroy'])->name('domains.destroy');
 
         Route::get('/analytics/{shortCode}', [AnalyticsController::class, 'show'])->name('analytics.show');

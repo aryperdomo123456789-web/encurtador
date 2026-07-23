@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerDomain;
 use App\Support\Domains\DomainDnsResolver;
+use App\Support\Domains\TlsProbeService;
 use App\Support\Shlink\DomainService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,15 +26,11 @@ final class DomainController extends Controller
             ->get();
 
         return view('domains.index', [
-            'domains'    => $domains,
-            'dnsTarget'  => (string) config('panel.custom_domain_dns_target', ''),
+            'domains'   => $domains,
+            'dnsTarget' => (string) config('panel.custom_domain_dns_target', ''),
         ]);
     }
 
-    /**
-     * Registra o pedido do cliente e devolve as instruções de DNS.
-     * O domínio só é registrado no Shlink depois do verify().
-     */
     public function store(Request $request): RedirectResponse
     {
         abort_unless((bool) optional($request->user())->canUseCustomDomain(), 403);
@@ -84,9 +81,6 @@ final class DomainController extends Controller
             ->with('domain_id', $customerDomain->id);
     }
 
-    /**
-     * Verifica DNS e, se OK, registra o domínio no Shlink e marca como ativo.
-     */
     public function verify(Request $request, DomainDnsResolver $resolver, DomainService $domainService, CustomerDomain $customerDomain): RedirectResponse
     {
         abort_unless((bool) optional($request->user())->canUseCustomDomain(), 403);
@@ -102,10 +96,19 @@ final class DomainController extends Controller
         $resolved = $resolver->resolveTargets($customerDomain->domain);
         if (!in_array($target, $resolved, true)) {
             $customerDomain->update(['status' => 'pending_dns']);
+
             return back()->withErrors([
                 'domain' => 'DNS ainda não aponta para ' . $target . '. Registros encontrados: '
                     . ($resolved === [] ? 'nenhum' : implode(', ', $resolved)),
             ]);
+        }
+
+        if ($customerDomain->status === 'active' && $customerDomain->dns_verified_at !== null) {
+            $customerDomain->update(['dns_verified_at' => now()]);
+
+            return redirect()
+                ->route('domains.index')
+                ->with('status', 'Domínio já está ativo. DNS confirmado novamente.');
         }
 
         try {
@@ -114,7 +117,8 @@ final class DomainController extends Controller
             return back()->withErrors(['domain' => 'Domínio inválido: ' . $e->getMessage()]);
         } catch (Throwable $e) {
             report($e);
-            return back()->withErrors(['domain' => 'Falha ao registrar o domínio no Shlink. Tente novamente em instantes.']);
+
+            return back()->withErrors(['domain' => 'Falha ao registrar o domínio no Shlink. Tente novamente em alguns instantes.']);
         }
 
         $customerDomain->update([
@@ -127,7 +131,32 @@ final class DomainController extends Controller
 
         return redirect()
             ->route('domains.index')
-            ->with('status', 'Domínio verificado e registrado no Shlink.');
+            ->with('status', 'Domínio verificado e ativo. TLS será emitido automaticamente pelo proxy reverso; use "Testar HTTPS" para acompanhar.');
+    }
+
+    /**
+     * Sonda HTTPS sob demanda para atualizar o estado do certificado TLS.
+     * O certificado em si é emitido pelo proxy reverso (Caddy/Traefik + Let's Encrypt);
+     * este endpoint apenas observa o resultado real.
+     */
+    public function tls(Request $request, TlsProbeService $probe, CustomerDomain $customerDomain): RedirectResponse
+    {
+        abort_unless((bool) optional($request->user())->canUseCustomDomain(), 403);
+        abort_unless($customerDomain->user_id === $request->user()->id, 403);
+
+        if ($customerDomain->status !== 'active') {
+            return back()->withErrors(['domain' => 'Verifique o DNS antes de testar o certificado TLS.']);
+        }
+
+        $result = $probe->probe($customerDomain->fresh());
+
+        $message = match ($result) {
+            'active'  => 'HTTPS ativo em ' . $customerDomain->domain . '.',
+            'pending' => 'Certificado ainda sendo emitido. Aguarde alguns minutos e teste novamente.',
+            default   => 'Não foi possível alcançar https://' . $customerDomain->domain . '. Confira DNS e proxy reverso.',
+        };
+
+        return redirect()->route('domains.index')->with('status', $message);
     }
 
     public function destroy(Request $request, CustomerDomain $customerDomain): RedirectResponse
