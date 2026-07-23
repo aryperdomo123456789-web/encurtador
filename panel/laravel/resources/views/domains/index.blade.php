@@ -15,16 +15,21 @@
         .badge-pending { background: #fef3c7; color: #92400e; }
         .badge-active  { background: #dcfce7; color: #166534; }
         .badge-error   { background: #fee2e2; color: #991b1b; }
+        .badge-tls-active  { background: #dbeafe; color: #1e40af; }
+        .badge-tls-pending { background: #ede9fe; color: #5b21b6; }
+        .badge-tls-error   { background: #fee2e2; color: #991b1b; }
         .alert { padding: .75rem 1rem; border-radius: 6px; margin: 1rem 0; }
         .alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
         .alert-error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
         form.inline { display: inline; margin-right: .35rem; }
         button { cursor: pointer; padding: .4rem .8rem; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; font: inherit; }
         button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+        button.secondary { background: #f3f4f6; color: #1f2937; }
         button.danger  { background: #fff; color: #991b1b; border-color: #fecaca; }
         input[type="text"] { padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 6px; width: 100%; max-width: 360px; }
         .domain-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
         .domain-meta { font-size: .85rem; color: #6b7280; margin-top: .35rem; }
+        .tls-error { font-size: .8rem; color: #991b1b; margin-top: .25rem; font-family: ui-monospace, Menlo, monospace; }
     </style>
 </head>
 <body>
@@ -82,15 +87,29 @@
                         'pending_dns' => 'Pendente DNS',
                         default       => 'Erro de verificação',
                     };
+                    $tlsStatus = $item->tls_status ?? 'pending';
+                    $tlsClass = match ($tlsStatus) {
+                        'active' => 'badge-tls-active',
+                        'error'  => 'badge-tls-error',
+                        default  => 'badge-tls-pending',
+                    };
+                    $tlsLabel = match ($tlsStatus) {
+                        'active' => 'HTTPS ativo',
+                        'error'  => 'HTTPS com erro',
+                        default  => 'HTTPS pendente',
+                    };
                 @endphp
                 <div class="card">
                     <div class="domain-row">
                         <div>
                             <strong style="font-size:1.05rem">{{ $item->domain }}</strong>
                             <span class="badge {{ $badgeClass }}">{{ $badgeLabel }}</span>
+                            @if ($status === 'active')
+                                <span class="badge {{ $tlsClass }}">{{ $tlsLabel }}</span>
+                            @endif
                             <div class="domain-meta">
                                 @if ($item->dns_verified_at)
-                                    Verificado em {{ $item->dns_verified_at->format('d/m/Y H:i') }}
+                                    DNS verificado em {{ $item->dns_verified_at->format('d/m/Y H:i') }}
                                 @else
                                     Aguardando verificação de DNS
                                 @endif
@@ -98,12 +117,20 @@
                                     · alvo: <code>{{ $item->dns_target }}</code>
                                 @endif
                             </div>
+                            @if ($tlsStatus === 'error' && !empty($item->tls_last_error))
+                                <div class="tls-error">TLS: {{ \Illuminate\Support\Str::limit($item->tls_last_error, 160) }}</div>
+                            @endif
                         </div>
                         <div>
                             @if ($status !== 'active')
                                 <form method="post" action="{{ route('domains.verify', $item) }}" class="inline">
                                     @csrf
                                     <button type="submit" class="primary">Verificar DNS</button>
+                                </form>
+                            @else
+                                <form method="post" action="{{ route('domains.tls', $item) }}" class="inline">
+                                    @csrf
+                                    <button type="submit" class="secondary">Testar HTTPS</button>
                                 </form>
                             @endif
                             <form method="post" action="{{ route('domains.destroy', $item) }}" class="inline"

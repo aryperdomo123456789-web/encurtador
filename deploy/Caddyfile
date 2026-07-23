@@ -1,0 +1,49 @@
+# Caddyfile de produção — encurtador Shlink + painel Laravel
+#
+# Responsabilidades:
+#   1. Servir o painel administrativo em ${PANEL_HOST}
+#   2. Servir o host default do Shlink (slugs curtos) em ${SHLINK_DEFAULT_DOMAIN}
+#   3. Emitir TLS On-Demand (Let's Encrypt) para domínios de clientes,
+#      consultando o painel via `ask` para autorizar cada hostname.
+#
+# Variáveis de ambiente esperadas (substituídas pelo compose via env):
+#   PANEL_HOST, SHLINK_DEFAULT_DOMAIN, TLS_CONTACT_EMAIL
+
+{
+	email {$TLS_CONTACT_EMAIL}
+
+	# Autorização de emissão TLS sob demanda: o Caddy só pede certificado
+	# para hostnames que o painel autoriza (200 OK). Qualquer outra
+	# resposta (404, 5xx) bloqueia a emissão.
+	on_demand_tls {
+		ask http://panel:8000/api/tls/allow
+		interval 2m
+		burst    5
+	}
+}
+
+# Painel administrativo
+{$PANEL_HOST} {
+	encode zstd gzip
+	reverse_proxy panel:8000 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host  {host}
+	}
+}
+
+# Domínio default do Shlink (slugs curtos servidos pelo motor)
+{$SHLINK_DEFAULT_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy shlink:8080
+}
+
+# Domínios de clientes (custom domains) — qualquer hostname que passe
+# pelo `ask` recebe cert Let's Encrypt automaticamente e é roteado ao
+# motor Shlink, que resolve o slug pelo header Host.
+https:// {
+	tls {
+		on_demand
+	}
+	encode zstd gzip
+	reverse_proxy shlink:8080
+}
