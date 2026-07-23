@@ -16,69 +16,27 @@
 
 Para o painel atual, o `me.vr766.com` precisa receber duas classes de rotas:
 
-- rotas administrativas e assets do Laravel vão para `panel/laravel/public`;
-- qualquer caminho que nao seja do painel vai para o Shlink, para permitir `me.vr766.com/{slug}`.
+- rotas administrativas e assets do Laravel vão para o painel em `127.0.0.1:8001`;
+- qualquer caminho que nao seja do painel vai para o Shlink em `127.0.0.1:8080`, para permitir `me.vr766.com/{slug}`.
 
 ```nginx
 server {
     listen 80;
     listen 443 ssl;
     server_name me.vr766.com;
-    location = / {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /healthz {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /health/ready {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /tls/allow {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /login {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /logout {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /links {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /domains {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /billing {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /analytics {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /build {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /favicon.ico {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /robots.txt {
-        proxy_pass http://127.0.0.1:8000;
-    }
-
-    location ^~ /up {
-        proxy_pass http://127.0.0.1:8000;
-    }
+    location ^~ /healthz { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /health/ready { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /tls/allow { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /login { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /logout { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /links { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /domains { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /billing { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /analytics { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /build { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /favicon.ico { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /robots.txt { proxy_pass http://127.0.0.1:8001; }
+    location ^~ /up { proxy_pass http://127.0.0.1:8001; }
 
     location / {
         proxy_pass http://127.0.0.1:8080;
@@ -145,11 +103,14 @@ Se no futuro o host `me.vr766.com` virar um projeto separado, ai sim o docroot p
 
 ## Roteamento de produção
 
-No deploy com `compose.prod.yml`, a borda faz a divisão por host:
+No deploy com `compose.prod.yml`, o painel sobe em `127.0.0.1:8001` e o Shlink continua em `127.0.0.1:8080`.
+O painel também entra na rede Docker compartilhada do stack do Shlink e resolve o host interno `shlink` para conseguir consultar `/rest/health` sem depender do `localhost` do host.
+O banco do painel usa o host interno `panel-db` para nao colidir com o alias `db` do stack do Shlink nessa mesma rede.
+O Nginx do host faz a divisão por caminho:
 
-- `me.vr766.com` envia as rotas administrativas ao Laravel e todo o resto ao Shlink;
+- rotas administrativas vão para o painel;
 - qualquer `dominio-do-cliente.tld/{slug}` vai direto para o Shlink;
-- o Caddy consulta `/tls/allow` no painel antes de emitir certificados on-demand para domínios de cliente.
+- o painel expõe `/tls/allow` para permitir on-demand TLS em proxies que suportam essa política.
 
 ## O que o painel faz
 

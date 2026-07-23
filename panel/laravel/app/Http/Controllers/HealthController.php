@@ -71,7 +71,7 @@ class HealthController extends Controller
         }
 
         // Motor Shlink (endpoint publico /rest/health nao exige X-Api-Key).
-        $base = rtrim((string) config('services.shlink.base_url', env('SHLINK_BASE_URL', '')), '/');
+        $base = rtrim((string) config('shlink.base_url', env('SHLINK_BASE_URL', '')), '/');
         if ($base === '') {
             $ok = false;
             $checks['shlink'] = ['status' => 'skip', 'error' => 'SHLINK_BASE_URL nao configurado'];

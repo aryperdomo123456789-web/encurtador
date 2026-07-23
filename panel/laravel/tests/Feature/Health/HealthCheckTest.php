@@ -22,7 +22,7 @@ class HealthCheckTest extends TestCase
 
     public function test_readiness_ok_quando_db_e_shlink_respondem(): void
     {
-        config()->set('services.shlink.base_url', 'https://shlink.test');
+        config()->set('shlink.base_url', 'https://shlink.test');
         Http::fake([
             'shlink.test/rest/health' => Http::response(['status' => 'pass'], 200),
         ]);
@@ -37,7 +37,7 @@ class HealthCheckTest extends TestCase
 
     public function test_readiness_degradado_quando_shlink_falha(): void
     {
-        config()->set('services.shlink.base_url', 'https://shlink.test');
+        config()->set('shlink.base_url', 'https://shlink.test');
         Http::fake([
             'shlink.test/rest/health' => Http::response(['status' => 'fail'], 500),
         ]);

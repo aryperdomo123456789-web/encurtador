@@ -19,7 +19,7 @@ return new class extends Migration
 
         Schema::table('users', function (Blueprint $table): void {
             if (!Schema::hasColumn('users', 'stripe_customer_id')) {
-                $table->string('stripe_customer_id', 128)->nullable()->unique()->after('plan');
+                $table->string('stripe_customer_id', 128)->nullable()->unique()->after('password');
             }
         });
 
