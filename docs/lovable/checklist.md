@@ -36,6 +36,6 @@ Itens essenciais para o produto funcionar de ponta a ponta.
 | Pri | Status | Item |
 |---|---|---|
 | P2 | [x] | Billing Stripe: checkout, portal, webhook, gate premium |
-| P2 | [ ] | Reset mensal automatico de cota free |
+| P2 | [x] | Reset mensal automatico de cota free |
 | P2 | [ ] | Observabilidade: logs estruturados, /health, Sentry |
 | P2 | [ ] | Deploy real em `app.me.vr766.com` via compose.prod.yml |
