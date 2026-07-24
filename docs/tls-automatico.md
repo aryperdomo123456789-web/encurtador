@@ -1,11 +1,17 @@
 # TLS automatico para dominios customizados
 
+## Topologia
+
+O deploy oficial usa **aaPanel + Nginx + certbot** no host `me.vr766.com`
+(painel) e no upstream do contêiner Shlink. Ver
+[`docs/topology.md`](topology.md) para a regra completa.
+
 ## Como o certificado e emitido
 
 O painel **nao** emite certificados TLS. A emissao e feita pelo proxy reverso
-publico (Caddy ou Traefik) que fica na frente do motor Shlink, usando
-Lets Encrypt automaticamente para qualquer host que resolva para o IP do
-servidor.
+publico (aaPanel/Nginx + certbot, ou equivalente) que fica na frente do motor
+Shlink, usando Lets Encrypt automaticamente para qualquer host que resolva
+para o IP do servidor.
 
 Fluxo:
 
@@ -22,13 +28,17 @@ Fluxo:
 ## Requisitos no proxy reverso
 
 - Escutar 80 e 443 no IP publico apontado pelo `PANEL_CUSTOM_DOMAIN_DNS_TARGET`.
-- Habilitar auto-HTTPS/on-demand TLS (Caddy: `on_demand_tls`; Traefik:
-  `certResolvers.letsencrypt`).
+- Habilitar emissao automatica de certificado on-demand para hosts nao
+  pre-configurados (no aaPanel/Nginx isso e feito com certbot + verificacao
+  do host contra `GET https://me.vr766.com/api/tls/allow?host={host}`).
 - Encaminhar o host recebido para o container `shlink` na porta 8080.
-- Nao interceptar `PANEL_HOST`, que continua servindo o painel Laravel.
+- Nao interceptar `me.vr766.com` nas rotas administrativas listadas em
+  `docs/topology.md`; qualquer outro path do host `me.vr766.com` (inclusive
+  `/{slug}`) vai direto ao Shlink.
 
-O deploy real do proxy reverso vive no PR seguinte deste backlog
-(observabilidade e docker-compose de producao).
+Alternativas historicas como Caddy (`on_demand_tls`) ou Traefik
+(`certResolvers.letsencrypt`) fazem o mesmo trabalho conceitual, mas **nao**
+sao dependencias do deploy oficial.
 
 ## Como o painel reage a erros de TLS
 
