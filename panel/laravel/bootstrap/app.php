@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AttachRequestContext;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
+
+        // Correlacao de logs por request_id (respeita X-Request-Id do proxy).
+        $middleware->append(AttachRequestContext::class);
 
         // Webhook do Stripe usa assinatura HMAC propria; CSRF nao se aplica.
         $middleware->validateCsrfTokens(except: [

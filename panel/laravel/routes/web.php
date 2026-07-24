@@ -5,11 +5,17 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DomainController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\LinkController;
 use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 $panelHost = (string) config('panel.host', '');
+
+// Endpoints de saude ficam fora do domain guard para permitir monitoramento
+// externo (uptime, orquestrador, balanceador) sem depender do PANEL_HOST.
+Route::get('/healthz', [HealthController::class, 'live'])->name('health.live');
+Route::get('/health/ready', [HealthController::class, 'ready'])->name('health.ready');
 
 $panelRoutes = static function (): void {
     Route::get('/', DashboardController::class)->name('dashboard');
