@@ -3,6 +3,11 @@
 Fonte da verdade do progresso rumo a producao do painel Shlink.
 Cada item so muda de estado com PR/commit correspondente.
 
+> **Topologia oficial:** `me.vr766.com` = painel; `api-shlink.vr766.com` = motor;
+> `me.vr766.com/{slug}` e dominios de cliente vao direto ao Shlink. Detalhes em
+> [`docs/topology.md`](../topology.md). Qualquer texto que cite
+> `app.me.vr766.com` esta obsoleto.
+
 ## Prioridade P0
 
 Itens que bloqueiam qualquer entrega segura.
@@ -38,4 +43,4 @@ Itens essenciais para o produto funcionar de ponta a ponta.
 | P2 | [x] | Billing Stripe: checkout, portal, webhook, gate premium |
 | P2 | [x] | Reset mensal automatico de cota free |
 | P2 | [x] | Observabilidade: logs estruturados, /healthz, /health/ready, request_id |
-| P2 | [x] | Deploy real em `me.vr766.com` via compose.prod.yml |
+| P2 | [x] | Deploy real em `me.vr766.com` via aaPanel/Nginx (vhost + PHP-FPM + upstream Shlink) |

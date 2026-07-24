@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerDomain;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Response;
 use Throwable;
 
 /**
@@ -31,11 +32,11 @@ class HealthController extends Controller
     /**
      * Autoriza emissao on-demand de TLS pelo proxy reverso.
      *
-     * O Caddy/Traefik consulta este endpoint antes de emitir o certificado.
+     * O proxy consulta este endpoint antes de emitir o certificado.
      * Permitimos o dominio padrao de slugs e qualquer dominio cadastrado no
      * painel. Hosts reservados do painel continuam fora desse fluxo.
      */
-    public function tlsAllow(\Illuminate\Http\Request $request): Response
+    public function tlsAllow(Request $request): Response
     {
         $domain = strtolower(trim((string) $request->query('domain', '')));
         $reserved = array_filter([

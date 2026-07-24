@@ -1,10 +1,16 @@
 # TLS automatico para dominios customizados
 
+## Topologia
+
+O deploy oficial usa **aaPanel + Nginx + certbot** no host `me.vr766.com`
+(painel) e no upstream do contêiner Shlink. Ver
+[`docs/topology.md`](topology.md) para a regra completa.
+
 ## Como o certificado e emitido
 
-O painel **nao** emite certificados TLS. No host atual, o aaPanel/Nginx faz a
-camada de borda e cada vhost de dominio proprio aponta direto para o motor
-Shlink na porta 8080.
+O painel **nao** emite certificados TLS. No deploy oficial, o aaPanel/Nginx
+faz a camada de borda e cada vhost de dominio proprio aponta direto para o
+motor Shlink na porta 8080.
 
 Fluxo:
 
@@ -26,8 +32,19 @@ Fluxo:
 - `me.vr766.com` deve reservar o painel em `/`, `/healthz`, `/health/ready`,
   `/tls/allow`, `/login`, `/links`, `/domains`, `/billing`, `/analytics`,
   `/build/`, `/storage/`, `/favicon.ico`, `/robots.txt` e `/up`.
-- O fallback de HTTP para hosts sem vhost dedicado também vai direto ao
+- O fallback de HTTP para hosts sem vhost dedicado tambem vai direto ao
   Shlink.
+- Habilitar emissao automatica de certificado on-demand para hosts nao
+  pre-configurados usando a autorizacao read-only em
+  `GET https://me.vr766.com/tls/allow?domain={host}`.
+- Encaminhar o host recebido para o container `shlink` na porta 8080.
+- Nao interceptar `me.vr766.com` nas rotas administrativas listadas em
+  `docs/topology.md`; qualquer outro path do host `me.vr766.com` (inclusive
+  `/{slug}`) vai direto ao Shlink.
+
+Alternativas historicas como Caddy (`on_demand_tls`) ou Traefik
+(`certResolvers.letsencrypt`) fazem o mesmo trabalho conceitual, mas **nao**
+sao dependencias do deploy oficial.
 
 ## Como o painel reage a erros de TLS
 
