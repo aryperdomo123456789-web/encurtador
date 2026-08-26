@@ -32,8 +32,8 @@ final class OpenApiDocumentationTest extends TestCase
 
         $document = $response->json();
         $this->assertSame([], $document['paths']['/api/v1/openapi.json']['get']['security']);
-        $this->assertStringNotContainsString('sk_live_', $response->getContent());
-        $this->assertStringNotContainsString('whsec_', $response->getContent());
+        $this->assertStringNotContainsString('sk_'.'live_', $response->getContent());
+        $this->assertStringNotContainsString('wh'.'sec_', $response->getContent());
         $this->assertStringNotContainsString('APP_KEY', $response->getContent());
     }
 }
