@@ -19,4 +19,4 @@ php artisan migrate --force
 php artisan storage:link || true
 
 export PHP_CLI_SERVER_WORKERS="${PHP_CLI_SERVER_WORKERS:-4}"
-exec php artisan serve --host=0.0.0.0 --port=8000
+exec php artisan serve --no-reload --host=0.0.0.0 --port=8000
