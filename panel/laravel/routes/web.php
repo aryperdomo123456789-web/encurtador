@@ -1,18 +1,19 @@
 <?php
 
-use App\Http\Controllers\AnalyticsController;
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Admin\BrandingController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\BrandingController;
 use App\Http\Controllers\Admin\RichPreviewController as AdminRichPreviewController;
 use App\Http\Controllers\Admin\UserAdminController;
+use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\LinkController;
-use App\Http\Controllers\RichPreviewController;
 use App\Http\Controllers\PublicRedirectController;
+use App\Http\Controllers\QrCodeController;
+use App\Http\Controllers\RichPreviewController;
 use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -55,6 +56,7 @@ $panelRoutes = static function (): void {
         });
 
         Route::get('/links', [LinkController::class, 'index'])->name('links.index');
+        Route::get('/links/{link}/qr', QrCodeController::class)->name('links.qr');
         Route::delete('/links/{link}', [LinkController::class, 'destroy'])->name('links.destroy');
 
         Route::get('/links/create', [LinkController::class, 'create'])->name('links.create');
@@ -89,6 +91,7 @@ $panelRoutes = static function (): void {
     // Shlink, o Laravel repassa a requisição para o motor e devolve a resposta
     // original sem interferir nos caminhos administrativos acima.
     Route::match(['GET', 'HEAD'], '/{path}', PublicRedirectController::class)
+        ->middleware('throttle:public-redirect')
         ->where('path', '.*')
         ->name('public.redirect');
 };

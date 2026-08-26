@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Links;
 
+use App\Models\CustomerDomain;
 use App\Models\Plan;
+use App\Models\ShortLink;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Support\Shlink\ShlinkClient;
@@ -28,7 +30,7 @@ final class CreatePremiumLinkTest extends TestCase
         $user = $this->premiumUser();
 
         $response = $this->actingAs($user)->post(route('links.premium.store'), [
-            'long_url'    => 'https://example.com/campanha',
+            'long_url' => 'https://example.com/campanha',
             'custom_slug' => 'promo-verao',
         ]);
 
@@ -40,13 +42,46 @@ final class CreatePremiumLinkTest extends TestCase
         $this->assertArrayNotHasKey('validUntil', FakePremiumShlinkPayload::$last);
     }
 
+    public function test_premium_user_can_create_campaign_with_domain_tags_and_utm(): void
+    {
+        $user = $this->premiumUser();
+        $domain = CustomerDomain::create([
+            'user_id' => $user->id,
+            'domain' => 'links.example.com',
+            'status' => 'active',
+            'dns_target' => 'me.vr766.com',
+            'tls_mode' => 'auto',
+            'tls_status' => 'active',
+        ]);
+
+        $this->actingAs($user)->post(route('links.premium.store'), [
+            'long_url' => 'https://example.com/oferta?ref=original',
+            'custom_slug' => 'oferta-verao',
+            'domain' => $domain->domain,
+            'title' => 'Oferta de verão',
+            'tags' => 'Instagram, verão, Instagram, produto',
+            'utm_source' => 'instagram',
+            'utm_medium' => 'paid-social',
+            'utm_campaign' => 'verao-2026',
+            'utm_content' => 'criativo-a',
+            'forward_query' => '1',
+        ])->assertRedirect(route('links.index'));
+
+        $this->assertSame('https://example.com/oferta?ref=original&utm_source=instagram&utm_medium=paid-social&utm_campaign=verao-2026&utm_content=criativo-a', FakePremiumShlinkPayload::$last['longUrl'] ?? null);
+        $this->assertSame('links.example.com', FakePremiumShlinkPayload::$last['domain'] ?? null);
+        $this->assertSame('Oferta de verão', FakePremiumShlinkPayload::$last['title'] ?? null);
+        $this->assertSame(['instagram', 'verão', 'produto'], FakePremiumShlinkPayload::$last['tags'] ?? null);
+        $this->assertTrue((bool) (FakePremiumShlinkPayload::$last['forwardQuery'] ?? false));
+        $this->assertSame($domain->id, ShortLink::query()->where('shlink_short_code', 'oferta-verao')->value('customer_domain_id'));
+    }
+
     public function test_premium_user_can_set_valid_until_within_one_year(): void
     {
         $user = $this->premiumUser();
         $validUntil = now()->addMonths(6)->format('Y-m-d\TH:i');
 
         $this->actingAs($user)->post(route('links.premium.store'), [
-            'long_url'    => 'https://example.com/campanha',
+            'long_url' => 'https://example.com/campanha',
             'custom_slug' => 'promo-longa',
             'valid_until' => $validUntil,
         ])->assertRedirect(route('links.index'));
@@ -61,7 +96,7 @@ final class CreatePremiumLinkTest extends TestCase
         $this->actingAs($user)
             ->from(route('links.premium'))
             ->post(route('links.premium.store'), [
-                'long_url'    => 'https://example.com',
+                'long_url' => 'https://example.com',
                 'custom_slug' => '-bad-',
             ])
             ->assertRedirect(route('links.premium'))
@@ -75,7 +110,7 @@ final class CreatePremiumLinkTest extends TestCase
         $this->actingAs($user)
             ->from(route('links.premium'))
             ->post(route('links.premium.store'), [
-                'long_url'    => 'https://example.com',
+                'long_url' => 'https://example.com',
                 'custom_slug' => 'valida-ate',
                 'valid_until' => now()->addYears(2)->format('Y-m-d\TH:i'),
             ])
@@ -90,7 +125,7 @@ final class CreatePremiumLinkTest extends TestCase
         $this->actingAs($user)->get(route('links.premium'))->assertForbidden();
 
         $this->actingAs($user)->post(route('links.premium.store'), [
-            'long_url'    => 'https://example.com',
+            'long_url' => 'https://example.com',
             'custom_slug' => 'nao-pode',
         ])->assertForbidden();
     }
@@ -99,7 +134,7 @@ final class CreatePremiumLinkTest extends TestCase
     {
         $this->get(route('links.premium'))->assertRedirect(route('login'));
         $this->post(route('links.premium.store'), [
-            'long_url'    => 'https://example.com',
+            'long_url' => 'https://example.com',
             'custom_slug' => 'sem-auth',
         ])->assertRedirect(route('login'));
     }
@@ -108,7 +143,7 @@ final class CreatePremiumLinkTest extends TestCase
     {
         $owner = User::factory()->create([
             'email' => 'mago@dono.com',
-            'role'  => 'owner',
+            'role' => 'owner',
         ]);
 
         $this->actingAs($owner)
@@ -118,7 +153,7 @@ final class CreatePremiumLinkTest extends TestCase
 
         $this->actingAs($owner)
             ->post(route('links.premium.store'), [
-                'long_url'    => 'https://example.com/campanha',
+                'long_url' => 'https://example.com/campanha',
                 'custom_slug' => 'dono-top',
             ])
             ->assertRedirect(route('links.index'));
@@ -131,29 +166,29 @@ final class CreatePremiumLinkTest extends TestCase
         $user = User::factory()->create();
 
         $plan = Plan::create([
-            'code'                      => 'pro',
-            'name'                      => 'Pro',
-            'description'               => 'Plano premium para testes',
-            'is_free'                   => false,
-            'monthly_short_url_limit'   => 0,
-            'allow_custom_slug'         => true,
-            'allow_custom_domain'       => true,
-            'allow_custom_expiration'   => true,
-            'allow_lifetime_links'      => true,
-            'is_active'                 => true,
+            'code' => 'pro',
+            'name' => 'Pro',
+            'description' => 'Plano premium para testes',
+            'is_free' => false,
+            'monthly_short_url_limit' => 0,
+            'allow_custom_slug' => true,
+            'allow_custom_domain' => true,
+            'allow_custom_expiration' => true,
+            'allow_lifetime_links' => true,
+            'is_active' => true,
         ]);
 
         Subscription::create([
-            'user_id'                => $user->id,
-            'plan_id'                => $plan->id,
-            'provider'               => 'test',
-            'provider_customer_id'   => 'cus_test',
+            'user_id' => $user->id,
+            'plan_id' => $plan->id,
+            'provider' => 'test',
+            'provider_customer_id' => 'cus_test',
             'provider_subscription_id' => 'sub_test',
-            'status'                 => 'active',
-            'current_period_start'   => now(),
-            'current_period_end'     => now()->addMonth(),
-            'cancel_at_period_end'   => false,
-            'metadata'               => [],
+            'status' => 'active',
+            'current_period_start' => now(),
+            'current_period_end' => now()->addMonth(),
+            'cancel_at_period_end' => false,
+            'metadata' => [],
         ]);
 
         return $user->fresh();
@@ -172,12 +207,12 @@ final class CreatePremiumLinkTest extends TestCase
                 $slug = FakePremiumShlinkPayload::$last['customSlug'] ?? 'auto';
 
                 return [
-                    'status'  => 200,
+                    'status' => 200,
                     'headers' => ['content-type' => 'application/json'],
-                    'body'    => json_encode([
-                        'shortCode'   => $slug,
-                        'shortUrl'    => 'https://sho.rt/' . $slug,
-                        'longUrl'     => FakePremiumShlinkPayload::$last['longUrl'] ?? null,
+                    'body' => json_encode([
+                        'shortCode' => $slug,
+                        'shortUrl' => 'https://sho.rt/'.$slug,
+                        'longUrl' => FakePremiumShlinkPayload::$last['longUrl'] ?? null,
                         'dateCreated' => '2026-07-22T00:00:00+00:00',
                     ]),
                 ];

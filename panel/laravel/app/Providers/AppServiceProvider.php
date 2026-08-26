@@ -11,8 +11,11 @@ use App\Support\Shlink\AnalyticsService;
 use App\Support\Shlink\DomainService;
 use App\Support\Shlink\LinkProvisioner;
 use App\Support\Shlink\ShlinkClient;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -51,6 +54,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('public-redirect', static function (Request $request): Limit {
+            $perMinute = max(1, (int) config('shlink.redirect_rate_limit', 120));
+            $key = implode('|', [
+                $request->getHost(),
+                $request->ip() ?: 'unknown',
+            ]);
+
+            return Limit::perMinute($perMinute)->by($key);
+        });
+
         View::composer('*', function ($view): void {
             $view->with('branding', BrandingSetting::current());
         });

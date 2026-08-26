@@ -93,6 +93,16 @@
                                     · custom slug
                                 @endif
                             </div>
+                            @if (data_get($link->shlink_payload, 'title'))
+                                <div class="meta" style="margin-top:5px;">Campanha: {{ data_get($link->shlink_payload, 'title') }}</div>
+                            @endif
+                            @if (collect(data_get($link->shlink_payload, 'tags', []))->isNotEmpty())
+                                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:7px;">
+                                    @foreach (collect(data_get($link->shlink_payload, 'tags', []))->take(4) as $tag)
+                                        <span class="badge info">{{ $tag }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
                         </td>
                         <td>
                             <div style="font-weight:700;">{{ $link->shlink_short_url ?? 'Pendente' }}</div>
@@ -110,6 +120,12 @@
                         <td>
                             @if ($link->shlink_short_url)
                                 <a class="button ghost" href="{{ $link->shlink_short_url }}" target="_blank" rel="noopener">Abrir</a>
+                            @endif
+                            @if ($link->shlink_short_code)
+                                <a class="button secondary" href="{{ route('analytics.show', ['shortCode' => $link->shlink_short_code]) }}">Analytics</a>
+                            @endif
+                            @if ($link->status === 'active' && $link->shlink_short_url)
+                                <a class="button ghost" href="{{ route('links.qr', $link) }}" target="_blank" rel="noopener">QR</a>
                             @endif
                             <form method="POST" action="{{ route('links.destroy', $link) }}" style="display:inline;">
                                 @csrf

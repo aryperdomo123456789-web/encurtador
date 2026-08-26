@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support\Shlink;
 
 use App\Contracts\FreeLinkQuotaRepository;
+use App\Models\CustomerDomain;
 use App\Models\Plan;
 use App\Models\ShortLink;
 use DateInterval;
@@ -21,8 +22,7 @@ final class LinkProvisioner
         private readonly FreeLinkQuotaRepository $quotaRepository,
         private readonly int $freeMonthlyLimit = 5,
         private readonly ?DomainService $domainService = null
-    ) {
-    }
+    ) {}
 
     /**
      * @param array{
@@ -48,7 +48,7 @@ final class LinkProvisioner
         $customSlug = $this->normalizeNullableString($options['customSlug'] ?? null);
         $domain = $this->normalizeDomain($options['domain'] ?? null);
 
-        if (!$premium && $domain !== null) {
+        if (! $premium && $domain !== null) {
             throw new InvalidArgumentException('Free links must use the default domain.');
         }
 
@@ -121,7 +121,7 @@ final class LinkProvisioner
 
         $response = $this->client->createShortUrl($payload);
 
-        if (!$premium) {
+        if (! $premium) {
             $this->quotaRepository->recordFreeLinkCreation($userId, [
                 'shortCode' => $response['shortCode'] ?? null,
                 'shortUrl' => $response['shortUrl'] ?? null,
@@ -135,7 +135,16 @@ final class LinkProvisioner
                 throw new DomainException('Premium plan is not configured.');
             }
 
+            $customerDomainId = $domain === null
+                ? null
+                : CustomerDomain::query()
+                    ->where('user_id', $userId)
+                    ->where('domain', $domain)
+                    ->where('status', 'active')
+                    ->value('id');
+
             ShortLink::query()->create([
+                'customer_domain_id' => $customerDomainId,
                 'user_id' => $userId,
                 'plan_id' => $premiumPlanId,
                 'shlink_short_url' => $response['shortUrl'] ?? null,
@@ -214,9 +223,6 @@ final class LinkProvisioner
         return strtolower($domain);
     }
 
-    /**
-     * @param DateTimeInterface|string $value
-     */
     private function formatDateTime(DateTimeInterface|string $value): string
     {
         if ($value instanceof DateTimeInterface) {
