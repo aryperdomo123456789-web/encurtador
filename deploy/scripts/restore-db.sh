@@ -32,8 +32,8 @@ echo "Restaurando banco a partir de $INPUT_FILE" >&2
 
 if [ "$DECOMPRESS" = 'gzip -dc' ]; then
     gzip -dc "$INPUT_FILE" | docker compose -f "$COMPOSE_FILE" exec -T db sh -lc \
-        'exec mariadb -u root -p"$MARIADB_ROOT_PASSWORD" "$MARIADB_DATABASE"'
+        'exec mariadb --protocol=TCP -h 127.0.0.1 -u root -p"$MARIADB_ROOT_PASSWORD" "$MARIADB_DATABASE"'
 else
     cat "$INPUT_FILE" | docker compose -f "$COMPOSE_FILE" exec -T db sh -lc \
-        'exec mariadb -u root -p"$MARIADB_ROOT_PASSWORD" "$MARIADB_DATABASE"'
+        'exec mariadb --protocol=TCP -h 127.0.0.1 -u root -p"$MARIADB_ROOT_PASSWORD" "$MARIADB_DATABASE"'
 fi
