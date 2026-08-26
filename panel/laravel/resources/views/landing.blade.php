@@ -25,14 +25,24 @@
     .mk-page * { box-sizing: border-box; }
     .mk-page a { color: inherit; }
     .mk-container { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    .mk-header {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        border-bottom: 1px solid rgba(16, 19, 33, .08);
+        background: rgba(239, 242, 255, .84);
+        box-shadow: 0 8px 28px rgba(30, 38, 82, .07);
+        backdrop-filter: blur(22px) saturate(135%);
+        -webkit-backdrop-filter: blur(22px) saturate(135%);
+    }
     .mk-announcement {
         display: flex;
         justify-content: center;
         gap: 10px;
-        padding: 10px 20px;
+        padding: 9px 20px;
         color: #fff;
         background: var(--mk-ink);
-        font-size: .78rem;
+        font-size: .76rem;
         font-weight: 800;
         letter-spacing: .01em;
         text-align: center;
@@ -43,7 +53,8 @@
         align-items: center;
         justify-content: space-between;
         gap: 26px;
-        padding: 24px 0 18px;
+        min-height: 76px;
+        padding: 15px 0;
     }
     .mk-brand { display: inline-flex; align-items: center; gap: 11px; font-weight: 900; letter-spacing: -.04em; }
     .mk-brand img { width: 40px; height: 40px; object-fit: cover; border-radius: 13px; box-shadow: 0 10px 22px rgba(49, 87, 245, .18); }
@@ -207,13 +218,14 @@
 </style>
 
 <div class="mk-page">
-    <div class="mk-announcement">
-        <span>Links de marca. Campanhas mais inteligentes. Crescimento mais mensurável.</span>
-        <a href="#produto">Conheça a plataforma →</a>
-    </div>
+    <header class="mk-header">
+        <div class="mk-announcement">
+            <span>Links de marca. Campanhas mais inteligentes. Crescimento mais mensurável.</span>
+            <a href="#produto">Conheça a plataforma →</a>
+        </div>
 
-    <div class="mk-container">
-        <nav class="mk-nav" aria-label="Navegação principal">
+        <div class="mk-container">
+            <nav class="mk-nav" aria-label="Navegação principal">
             <a class="mk-brand" href="{{ route('dashboard') }}" aria-label="MElink — início">
                 <img src="{{ $branding->logoUrl() }}" alt="MElink" loading="eager">
                 <span class="mk-brand-text">MElink <small>links que trabalham</small></span>
@@ -229,8 +241,11 @@
                 <a class="mk-link-btn" href="{{ route('login') }}">Entrar</a>
                 <a class="mk-btn mk-btn-dark" href="{{ route('register') }}">Começar grátis <span aria-hidden="true">↗</span></a>
             </div>
-        </nav>
+            </nav>
+        </div>
+    </header>
 
+    <div class="mk-container">
         <main>
             <section class="mk-hero" aria-labelledby="mk-hero-title">
                 <div class="mk-hero-grid">
