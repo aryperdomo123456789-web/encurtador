@@ -47,7 +47,11 @@ class HealthController extends Controller
         $allowed = $domain !== ''
             && (
                 in_array($domain, $reserved, true)
-                || CustomerDomain::query()->where('domain', $domain)->exists()
+                || CustomerDomain::query()
+                    ->where('domain', $domain)
+                    ->where('status', 'active')
+                    ->whereNotNull('dns_verified_at')
+                    ->exists()
             );
 
         abort_unless($allowed, 403);

@@ -79,6 +79,7 @@ class HealthCheckTest extends TestCase
             'domain' => 'links.cliente.com',
             'status' => 'active',
             'dns_target' => 'me.vr766.com',
+            'dns_verified_at' => now(),
             'tls_mode' => 'on_demand',
             'tls_status' => 'pending',
         ]);

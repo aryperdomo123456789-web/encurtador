@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Contracts\FreeLinkQuotaRepository;
 use App\Models\MonthlyQuotaUsage;
+use App\Models\Plan;
 use App\Models\ShortLink;
 use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
@@ -23,11 +24,16 @@ final class EloquentFreeLinkQuotaRepository implements FreeLinkQuotaRepository
 
     public function recordFreeLinkCreation(int $userId, array $record): void
     {
-        DB::transaction(function () use ($userId, $record): void {
+        $freePlanId = Plan::query()->where('code', 'free')->value('id');
+        if ($freePlanId === null) {
+            throw new \RuntimeException('Free plan is not configured.');
+        }
+
+        DB::transaction(function () use ($userId, $record, $freePlanId): void {
             ShortLink::query()->create([
                 'user_id' => $userId,
                 'customer_domain_id' => null,
-                'plan_id' => null,
+                'plan_id' => $freePlanId,
                 'shlink_short_url' => $record['shortUrl'] ?? null,
                 'shlink_short_code' => $record['shortCode'] ?? null,
                 'domain' => $record['domain'] ?? config('shlink.default_domain'),

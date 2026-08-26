@@ -23,6 +23,7 @@ final class LinkController extends Controller
         $nextMonthStart = (clone $monthStart)->addMonth();
         $createdThisMonth = ShortLink::query()
             ->where('user_id', $user->id)
+            ->where('is_free_link', true)
             ->whereBetween('created_at', [$monthStart, $nextMonthStart])
             ->count();
 
@@ -40,6 +41,24 @@ final class LinkController extends Controller
                 ->first(),
             'isPremium' => (bool) $user->isPremium(),
         ]);
+    }
+
+    public function destroy(Request $request, ShortLink $link, \App\Support\Shlink\ShlinkClient $client): RedirectResponse
+    {
+        abort_unless((int) $link->user_id === (int) $request->user()->id, 404);
+
+        try {
+            if ($link->shlink_short_code) {
+                $client->deleteShortUrl((string) $link->shlink_short_code);
+            }
+            $link->delete();
+        } catch (Throwable $e) {
+            report($e);
+            return redirect()->route('links.index')
+                ->withErrors(['link' => 'Não foi possível excluir o link agora.']);
+        }
+
+        return redirect()->route('links.index')->with('status', 'Link excluído.');
     }
 
     public function create(): View

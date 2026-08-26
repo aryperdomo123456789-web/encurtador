@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Support\Shlink;
 
 use App\Contracts\FreeLinkQuotaRepository;
+use App\Models\Plan;
+use App\Models\ShortLink;
 use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -126,6 +128,29 @@ final class LinkProvisioner
                 'longUrl' => $longUrl,
                 'domain' => $domain,
                 'createdAt' => $response['dateCreated'] ?? (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM),
+            ]);
+        } else {
+            $premiumPlanId = Plan::query()->where('code', 'premium')->value('id');
+            if ($premiumPlanId === null) {
+                throw new DomainException('Premium plan is not configured.');
+            }
+
+            ShortLink::query()->create([
+                'user_id' => $userId,
+                'plan_id' => $premiumPlanId,
+                'shlink_short_url' => $response['shortUrl'] ?? null,
+                'shlink_short_code' => $response['shortCode'] ?? $customSlug,
+                'domain' => $domain ?? config('shlink.default_domain'),
+                'long_url' => $longUrl,
+                'custom_slug' => $customSlug,
+                'generated_slug' => $response['shortCode'] ?? $customSlug,
+                'is_custom_slug' => true,
+                'is_free_link' => false,
+                'valid_until' => $options['validUntil'] ?? null,
+                'status' => 'active',
+                'created_via' => 'panel',
+                'shlink_payload' => $payload,
+                'shlink_response' => $response,
             ]);
         }
 

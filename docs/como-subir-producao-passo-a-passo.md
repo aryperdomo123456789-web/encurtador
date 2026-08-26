@@ -189,19 +189,16 @@ Referência:
 
 ## 10. Criar ou confirmar a conta do dono
 
-O seed do projeto cria:
-
-- `mago@dono.com`
-- senha `12345678`
-
-Se o banco estiver vazio, isso é criado automaticamente com:
+O seed não cria mais uma conta privilegiada com senha fixa. Para ambiente local
+ou de teste, defina `SEED_OWNER_EMAIL` e `SEED_OWNER_PASSWORD` antes de
+executar:
 
 ```bash
 cd /www/wwwroot/api-shlink.vr766.com/panel/laravel
 php artisan db:seed
 ```
 
-Se o banco já tiver dados, confirme que essa conta existe.
+Em produção, crie a conta do dono por um procedimento seguro fora do Git.
 
 ---
 

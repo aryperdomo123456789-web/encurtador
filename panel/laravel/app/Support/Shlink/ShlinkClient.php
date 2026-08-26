@@ -46,6 +46,11 @@ final class ShlinkClient
         return $this->request('GET', '/short-urls/' . rawurlencode($shortCode) . '/visits', $query);
     }
 
+    public function deleteShortUrl(string $shortCode): void
+    {
+        $this->request('DELETE', '/short-urls/' . rawurlencode($shortCode));
+    }
+
     public function getDomainVisits(string $domain, array $query = []): array
     {
         return $this->request('GET', '/domains/' . rawurlencode($domain) . '/visits', $query);

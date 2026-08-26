@@ -18,20 +18,20 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::query()->updateOrCreate([
-            'email' => 'test@example.com',
-        ], [
-            'name' => 'Test User',
-            'password' => Hash::make('password'),
-            'role' => 'user',
+        if (! app()->environment(['local', 'testing'])) {
+            return;
+        }
+
+        User::query()->updateOrCreate(['email' => 'test@example.com'], [
+            'name' => 'Test User', 'password' => Hash::make('password'), 'role' => 'user',
         ]);
 
-        User::query()->updateOrCreate([
-            'email' => 'mago@dono.com',
-        ], [
-            'name' => 'Mago Dono',
-            'password' => Hash::make('12345678'),
-            'role' => 'owner',
-        ]);
+        $ownerEmail = (string) env('SEED_OWNER_EMAIL', '');
+        $ownerPassword = (string) env('SEED_OWNER_PASSWORD', '');
+        if ($ownerEmail !== '' && $ownerPassword !== '') {
+            User::query()->updateOrCreate(['email' => $ownerEmail], [
+                'name' => 'Owner', 'password' => Hash::make($ownerPassword), 'role' => 'owner',
+            ]);
+        }
     }
 }

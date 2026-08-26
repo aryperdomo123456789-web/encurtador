@@ -161,12 +161,11 @@ O admin foi desenhado para operação leve e segura.
 - não expõe ações destrutivas desnecessárias;
 - não mexe em fluxos de cliente que já funcionam.
 
-### Credenciais do dono
+### Conta do dono
 
-- `mago@dono.com`
-- `12345678`
-
-Essa conta é criada via seed em [`panel/laravel/database/seeders/DatabaseSeeder.php`](/www/wwwroot/api-shlink.vr766.com/panel/laravel/database/seeders/DatabaseSeeder.php).
+O seed não contém mais credenciais fixas. Em ambiente local ou de teste, defina
+`SEED_OWNER_EMAIL` e `SEED_OWNER_PASSWORD` antes de executar o seed. Em
+produção, crie a conta do dono por um procedimento seguro fora do repositório.
 
 ## 7. Integração com o motor
 
