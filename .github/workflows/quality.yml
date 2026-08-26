@@ -95,7 +95,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git grep -nI -E '(^|[^A-Za-z])(sk_live_|rk_live_|whsec_|AKIA[0-9A-Z]{16}|-----BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY-----)' -- . ':!*.lock'; then
+          stripe_live=sk_
+          stripe_live="${stripe_live}live_"
+          stripe_restricted=rk_
+          stripe_restricted="${stripe_restricted}live_"
+          stripe_webhook=wh
+          stripe_webhook="${stripe_webhook}sec_"
+          private_key=-----BE
+          private_key="${private_key}GIN "
+          if git grep -nI -E "(^|[^A-Za-z])(${stripe_live}|${stripe_restricted}|${stripe_webhook}|AKIA[0-9A-Z]{16}|${private_key}(RSA|OPENSSH|EC|PRIVATE) KEY-----)" -- . ':!*.lock'; then
             echo 'Potential secret pattern found in tracked files.' >&2
             exit 1
           fi
