@@ -13,7 +13,10 @@
             <div class="card compact">
                 <h2 class="card-title">API v1</h2>
                 <p class="meta">Bearer tokens · JSON · scopes · expiração</p>
-                <a class="button secondary" href="{{ url('/api/v1/me') }}" target="_blank" rel="noopener">Ver endpoint</a>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <a class="button secondary" href="{{ url('/api/v1/me') }}" target="_blank" rel="noopener">Ver endpoint</a>
+                    <a class="button secondary" href="{{ url('/api/v1/openapi.json') }}" target="_blank" rel="noopener">OpenAPI JSON</a>
+                </div>
             </div>
         </aside>
     </div>
