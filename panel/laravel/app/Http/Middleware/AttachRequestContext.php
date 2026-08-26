@@ -20,7 +20,7 @@ class AttachRequestContext
     public function handle(Request $request, Closure $next): Response
     {
         $requestId = (string) $request->headers->get('X-Request-Id', '');
-        if ($requestId === '' || strlen($requestId) > 128) {
+        if (preg_match('/\\A[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}\\z/D', $requestId) !== 1) {
             $requestId = (string) Str::uuid();
         }
 
@@ -41,9 +41,16 @@ class AttachRequestContext
             'path' => '/'.ltrim($request->path(), '/'),
         ]);
 
+        $startedAt = microtime(true);
+
         /** @var Response $response */
         $response = $next($request);
         $response->headers->set('X-Request-Id', $requestId);
+
+        Log::withContext([
+            'status' => $response->getStatusCode(),
+            'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
+        ]);
 
         return $response;
     }
