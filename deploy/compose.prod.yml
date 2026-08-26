@@ -1,3 +1,40 @@
+x-panel-environment: &panel-environment
+  APP_ENV: production
+  APP_DEBUG: "false"
+  APP_URL: ${APP_URL}
+  APP_KEY: ${APP_KEY}
+  PANEL_HOST: ${PANEL_HOST}
+  PANEL_CUSTOM_DOMAIN_DNS_TARGET: ${PANEL_CUSTOM_DOMAIN_DNS_TARGET}
+  DB_CONNECTION: mysql
+  DB_HOST: panel-db
+  DB_PORT: 3306
+  DB_DATABASE: ${DB_NAME}
+  DB_USERNAME: ${DB_USER}
+  DB_PASSWORD: ${DB_PASSWORD}
+  SHLINK_BASE_URL: ${SHLINK_BASE_URL:-http://shlink:8080}
+  SHLINK_REDIRECT_BASE_URL: ${SHLINK_REDIRECT_BASE_URL:-http://shlink:8080}
+  FPM_MAX_CHILDREN: ${FPM_MAX_CHILDREN:-12}
+  FPM_START_SERVERS: ${FPM_START_SERVERS:-3}
+  FPM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE_SERVERS:-2}
+  FPM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE_SERVERS:-6}
+  SHLINK_API_KEY: ${INITIAL_API_KEY}
+  SHLINK_DEFAULT_DOMAIN: ${SHLINK_DEFAULT_DOMAIN}
+  TRUSTED_PROXIES: ${TRUSTED_PROXIES}
+  LOG_CHANNEL: ${LOG_CHANNEL}
+  LOG_STACK: ${LOG_STACK}
+  LOG_STDERR_FORMATTER: ${LOG_STDERR_FORMATTER}
+  GEOLITE_LICENSE_KEY: ${GEOLITE_LICENSE_KEY:-}
+  STRIPE_KEY: ${STRIPE_KEY:-}
+  STRIPE_SECRET: ${STRIPE_SECRET:-}
+  STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+  STRIPE_PREMIUM_PRICE_ID: ${STRIPE_PREMIUM_PRICE_ID:-}
+
+x-panel-volumes: &panel-volumes
+  - ..:/app
+  - panel_vendor:/app/panel/laravel/vendor
+  - panel_storage:/app/panel/laravel/storage
+  - panel_bootstrap_cache:/app/panel/laravel/bootstrap/cache
+
 services:
   db:
     image: mariadb:11.4
@@ -32,41 +69,8 @@ services:
     working_dir: /app/panel/laravel
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    environment:
-      APP_ENV: production
-      APP_DEBUG: "false"
-      APP_URL: ${APP_URL}
-      APP_KEY: ${APP_KEY}
-      PANEL_HOST: ${PANEL_HOST}
-      PANEL_CUSTOM_DOMAIN_DNS_TARGET: ${PANEL_CUSTOM_DOMAIN_DNS_TARGET}
-      DB_CONNECTION: mysql
-      DB_HOST: panel-db
-      DB_PORT: 3306
-      DB_DATABASE: ${DB_NAME}
-      DB_USERNAME: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      SHLINK_BASE_URL: ${SHLINK_BASE_URL:-http://shlink:8080}
-      SHLINK_REDIRECT_BASE_URL: ${SHLINK_REDIRECT_BASE_URL:-http://shlink:8080}
-      FPM_MAX_CHILDREN: ${FPM_MAX_CHILDREN:-12}
-      FPM_START_SERVERS: ${FPM_START_SERVERS:-3}
-      FPM_MIN_SPARE_SERVERS: ${FPM_MIN_SPARE_SERVERS:-2}
-      FPM_MAX_SPARE_SERVERS: ${FPM_MAX_SPARE_SERVERS:-6}
-      SHLINK_API_KEY: ${INITIAL_API_KEY}
-      SHLINK_DEFAULT_DOMAIN: ${SHLINK_DEFAULT_DOMAIN}
-      TRUSTED_PROXIES: ${TRUSTED_PROXIES}
-      LOG_CHANNEL: ${LOG_CHANNEL}
-      LOG_STACK: ${LOG_STACK}
-      LOG_STDERR_FORMATTER: ${LOG_STDERR_FORMATTER}
-      GEOLITE_LICENSE_KEY: ${GEOLITE_LICENSE_KEY:-}
-      STRIPE_KEY: ${STRIPE_KEY:-}
-      STRIPE_SECRET: ${STRIPE_SECRET:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      STRIPE_PREMIUM_PRICE_ID: ${STRIPE_PREMIUM_PRICE_ID:-}
-    volumes:
-      - ..:/app
-      - panel_vendor:/app/panel/laravel/vendor
-      - panel_storage:/app/panel/laravel/storage
-      - panel_bootstrap_cache:/app/panel/laravel/bootstrap/cache
+    environment: *panel-environment
+    volumes: *panel-volumes
     command: ["sh", "/app/deploy/panel-entrypoint.sh"]
     networks:
       - default
@@ -81,6 +85,36 @@ services:
       timeout: 6s
       retries: 5
       start_period: 45s
+
+  scheduler:
+    image: vr766/shlink-panel:prod
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    working_dir: /app/panel/laravel
+    environment: *panel-environment
+    volumes: *panel-volumes
+    entrypoint: ["sh", "-lc"]
+    command: ["php artisan schedule:work --no-interaction"]
+    networks:
+      - default
+      - shlink_shared
+
+  queue:
+    image: vr766/shlink-panel:prod
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    working_dir: /app/panel/laravel
+    environment: *panel-environment
+    volumes: *panel-volumes
+    entrypoint: ["sh", "-lc"]
+    command: ["php artisan queue:work --sleep=3 --tries=3 --timeout=90 --no-interaction"]
+    networks:
+      - default
+      - shlink_shared
 
 volumes:
   db_data:
