@@ -11,7 +11,7 @@ class StripeWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
-    private string $secret = 'whsec_test_melink';
+    private string $secret = 'test-webhook-secret-melink';
 
     protected function setUp(): void
     {

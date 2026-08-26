@@ -11,7 +11,7 @@ Em `panel/laravel/.env`:
 ```
 STRIPE_KEY=pk_test_...
 STRIPE_SECRET=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_WEBHOOK_SECRET=<webhook-secret-from-stripe-dashboard>
 STRIPE_PREMIUM_PRICE_ID=price_...
 ```
 
@@ -43,7 +43,7 @@ duplicatas sao ignoradas.
 
 1. Instale `stripe/stripe-cli`.
 2. `stripe listen --forward-to https://me.vr766.com/billing/webhook`
-3. Copie o `whsec_...` mostrado para `STRIPE_WEBHOOK_SECRET`.
+3. Copie o `<webhook-secret>` mostrado para `STRIPE_WEBHOOK_SECRET`.
 4. `stripe trigger checkout.session.completed` para simular.
 
 ## Modelo de dados
