@@ -28,15 +28,15 @@ $panelHost = (string) config('panel.host', '');
 // Endpoints de saude ficam fora do domain guard para permitir monitoramento
 // externo (uptime, orquestrador, balanceador) sem depender do PANEL_HOST.
 Route::get('/tls/allow', [HealthController::class, 'tlsAllow'])
-    ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class])
+    ->withoutMiddleware(['web', StartSession::class, ShareErrorsFromSession::class])
     ->middleware('throttle:health')
     ->name('tls.allow');
 Route::get('/healthz', [HealthController::class, 'live'])
-    ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class])
+    ->withoutMiddleware(['web', StartSession::class, ShareErrorsFromSession::class])
     ->middleware('throttle:health')
     ->name('health.live');
 Route::get('/health/ready', [HealthController::class, 'ready'])
-    ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class])
+    ->withoutMiddleware(['web', StartSession::class, ShareErrorsFromSession::class])
     ->middleware('throttle:health')
     ->name('health.ready');
 
