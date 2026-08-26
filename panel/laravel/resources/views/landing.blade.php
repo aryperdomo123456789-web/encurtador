@@ -19,7 +19,7 @@
         --mk-soft: #f7f8fc;
         color: var(--mk-ink);
         font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
-        overflow: hidden;
+        overflow: visible;
     }
 
     .mk-page * { box-sizing: border-box; }
