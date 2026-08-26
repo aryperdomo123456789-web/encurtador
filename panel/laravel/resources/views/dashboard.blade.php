@@ -64,6 +64,49 @@
             </aside>
         </div>
 
+        @php
+            $onboardingPercent = $onboardingTotal > 0
+                ? (int) round(($onboardingCompleted / $onboardingTotal) * 100)
+                : 0;
+        @endphp
+
+        @if ($onboardingCompleted < $onboardingTotal)
+            <section class="card activation-card section">
+                <div class="section-head">
+                    <div>
+                        <span class="eyebrow">Primeiros resultados</span>
+                        <h2>Coloque sua primeira campanha no ar</h2>
+                        <p>Um caminho curto para sair do cadastro e chegar a um link que gera ação.</p>
+                    </div>
+                    <div class="activation-summary">
+                        <strong>{{ $onboardingCompleted }}/{{ $onboardingTotal }}</strong>
+                        <span>etapas concluídas</span>
+                    </div>
+                </div>
+
+                <div class="activation-progress" aria-label="{{ $onboardingPercent }}% do início concluído">
+                    <span style="width: {{ $onboardingPercent }}%;"></span>
+                </div>
+
+                <div class="activation-steps">
+                    @foreach ($onboarding as $step)
+                        <div class="activation-step {{ $step['done'] ? 'is-done' : '' }}">
+                            <span class="step-marker" aria-hidden="true">{{ $step['done'] ? '✓' : $loop->iteration }}</span>
+                            <div class="step-copy">
+                                <strong>{{ $step['label'] }}</strong>
+                                <span>{{ $step['description'] }}</span>
+                            </div>
+                            @if ($step['done'])
+                                <span class="step-status">Concluído</span>
+                            @else
+                                <a class="button ghost" href="{{ $step['href'] }}">{{ $step['cta'] }} ↗</a>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         <div class="grid cards-4 section">
             <div class="card">
                 <div class="card-header">
