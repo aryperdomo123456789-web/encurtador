@@ -2,10 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\ApiDocumentationController;
 use App\Http\Controllers\Api\LinkApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('throttle:api')->group(function (): void {
+    Route::get('/openapi.json', ApiDocumentationController::class)
+        ->withoutMiddleware('api-token:read')
+        ->name('api.v1.openapi');
+
     Route::middleware('api-token:read')->group(function (): void {
         Route::get('/me', [LinkApiController::class, 'me'])->name('api.v1.me');
         Route::get('/links', [LinkApiController::class, 'index'])->name('api.v1.links.index');

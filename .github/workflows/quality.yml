@@ -55,6 +55,7 @@ jobs:
 
       - name: Prepare test environment
         run: |
+          touch .env
           cp .env.example .env.testing
           sed -i 's/^APP_ENV=.*/APP_ENV=testing/' .env.testing
           sed -i 's/^APP_DEBUG=.*/APP_DEBUG=false/' .env.testing
@@ -82,7 +83,7 @@ jobs:
           APP_DEBUG: 'false'
           DB_CONNECTION: sqlite
           DB_DATABASE: ':memory:'
-        run: php artisan test --colors=never
+        run: php artisan test
 
       - name: Audit dependencies
         run: composer audit --locked --no-interaction

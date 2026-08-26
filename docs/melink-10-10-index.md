@@ -19,6 +19,7 @@
 | [`landing-redesign-melink.md`](landing-redesign-melink.md) | Redesign da home, copy, assets, CTAs e acessibilidade | Referência |
 | [`runtime-fpm-nginx.md`](runtime-fpm-nginx.md) | PHP-FPM, Nginx, healthcheck, scheduler, queue e rollback | 8 |
 | [`ci-quality.md`](ci-quality.md) | CI, testes, Pint, Composer audit e secret scan | 9 |
+| [`api-v1-melink.md`](api-v1-melink.md) | Contrato OpenAPI, autenticação, scopes, idempotência e operação | 10 |
 
 ## Sequência de execução
 
@@ -26,7 +27,7 @@
 2. Instrumentar onboarding e funil.
 3. Entregar conversões, exportação, edição de destino, QR completo e domínio/TLS.
 4. Introduzir workspaces, RBAC, clientes e relatório de agência.
-5. Publicar API, webhooks, SDK e integrações.
+5. Publicar API documentada, webhooks, SDK e integrações.
 6. Só depois priorizar IA, deep linking mobile, afiliados e marketplace.
 
 ## Fontes do benchmark
@@ -39,7 +40,8 @@ O programa 10/10 termina quando o produto demonstrar, em dados reais e não em i
 
 ## Entregas adicionais da release de plataforma
 
-- [`api-v1-melink.md`](api-v1-melink.md): autenticação Bearer, scopes, emissão, revogação e endpoints da API v1.
+- [`api-v1-melink.md`](api-v1-melink.md): autenticação Bearer, scopes, emissão, revogação, idempotência e contrato OpenAPI público da API v1.
+- `GET /api/v1/openapi.json`: contrato OpenAPI 3.1 público, validado por teste de estrutura e scan de conteúdo sensível.
 - Fluxos de identidade: verificação de e-mail condicional em produção e recuperação de senha com resposta anti-enumeração.
 - Hardening P0: rate limits por finalidade, trusted proxies explícitos, health sem sessão, headers globais e webhook Stripe idempotente.
 - Integridade de links: reserva atômica de quota Free, reconciliação do espelho e proteção contra corridas.

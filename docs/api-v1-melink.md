@@ -1,6 +1,6 @@
 # API v1 do MElink
 
-**Status:** implementada em desenvolvimento; publicar somente após executar migrations e validar a configuração de produção.
+**Status:** implementada e versionada; o contrato OpenAPI público é `GET /api/v1/openapi.json`. O endpoint deve ser validado no host público a cada release.
 
 ## Objetivo
 
@@ -14,8 +14,11 @@ A API v1 permite que clientes, agências e automações criem e operem links sem
 | `GET` | `/api/v1/links` | `read` | Lista links do usuário com paginação e filtro de status. |
 | `GET` | `/api/v1/links/{id}` | `read` | Retorna um link pertencente à conta autenticada. |
 | `POST` | `/api/v1/links` | `write` | Cria link Free ou Premium conforme entitlements. |
+| `PATCH` | `/api/v1/links/{id}` | `write` | Atualiza o destino longo mantendo o slug estável. |
 | `DELETE` | `/api/v1/links/{id}` | `write` | Exclui o link no Shlink e no espelho local. |
 | `GET` | `/api/v1/links/{id}/analytics` | `analytics` | Consulta visitas do link com filtros de período. |
+| `POST` | `/api/v1/events` | `events` | Registra evento de conversão com deduplicação. |
+| `GET` | `/api/v1/openapi.json` | público | Retorna o contrato OpenAPI 3.1 em JSON. |
 
 Todas as respostas são JSON. Os erros usam `error` estável, por exemplo `unauthorized`, `insufficient_scope`, `premium_required`, `analytics_unavailable` e `link_creation_failed`.
 
@@ -53,7 +56,7 @@ O payload aceita `custom_slug`, `domain`, `title`, `tags`, `forward_query`, `val
 
 O rate limit padrão é `PANEL_API_RATE_LIMIT=120` requests por minuto por IP. Em produção, deve ser substituído por limiter distribuído em Redis antes de múltiplas réplicas. Logs não podem registrar o Bearer token nem URLs com dados pessoais; o request ID deve ser usado para correlação.
 
-Os endpoints de escrita devem usar `Idempotency-Key` do cliente. A próxima evolução obrigatória é persistir a chave por usuário, método, rota e payload para garantir replay determinístico após timeout entre a aplicação e o Shlink.
+Os endpoints de escrita (`POST`, `PATCH`, `DELETE`) devem usar `Idempotency-Key` do cliente. A chave é persistida por usuário, método, rota e hash do payload para garantir replay determinístico após timeout entre a aplicação e o Shlink.
 
 ## Critérios de aceite
 
@@ -61,7 +64,7 @@ A API só pode ser considerada pronta para clientes externos quando houver docum
 
 ## Idempotência de escritas
 
-`POST` e `DELETE` exigem `Idempotency-Key` com até 80 caracteres alfanuméricos ou os símbolos `.`, `_`, `:` e `-`. A chave é vinculada ao usuário, método, rota e hash do payload por 24 horas. Repetir a mesma chave com o mesmo payload reproduz a resposta original; reutilizar a chave com payload diferente retorna `409`; uma operação concorrente retorna `409` enquanto está em andamento.
+`POST`, `PATCH` e `DELETE` exigem `Idempotency-Key` com até 100 caracteres alfanuméricos ou os símbolos `.`, `_`, `:` e `-`. A chave é vinculada ao usuário, método, rota e hash do payload por 24 horas. Repetir a mesma chave com o mesmo payload reproduz a resposta original; reutilizar a chave com payload diferente retorna `409`; uma operação concorrente retorna `409` enquanto está em andamento.
 
 Essa camada reduz duplicação quando a conexão entre cliente, painel e Shlink cai depois da criação do recurso. Em múltiplas réplicas, a tabela deve permanecer em banco compartilhado e o rate limit deve migrar para Redis.
 
@@ -78,5 +81,15 @@ Os campos de rede não são persistidos em claro: o IP e o User-Agent são trans
 ## Atualização de destino
 
 `PATCH /api/v1/links/{id}` exige scope `write` e `Idempotency-Key`. O slug permanece estável; somente o destino longo é enviado ao Shlink e atualizado no espelho local depois de sucesso remoto.
+
+## Contrato OpenAPI
+
+O contrato legível por ferramentas de integração está em `GET /api/v1/openapi.json` e não exige Bearer token. Ele descreve autenticação, scopes, `Idempotency-Key`, schemas principais e respostas dos endpoints v1. Em ambiente público:
+
+```bash
+curl -fsSL https://me.vr766.com/api/v1/openapi.json | jq '.info, (.paths | keys)'
+```
+
+O documento não contém tokens, chaves, credenciais ou valores de configuração. Alterações de endpoint devem atualizar o controller do contrato, este guia e o teste de contrato na mesma mudança.
 
 Consulte também `docs/release-plataforma-melink-10-10-v1.md` para o runbook de produção, variáveis obrigatórias e critérios de aceite.
