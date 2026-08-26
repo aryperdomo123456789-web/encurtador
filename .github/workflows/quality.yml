@@ -1,0 +1,101 @@
+name: MElink quality gate
+
+on:
+  push:
+    branches: [main, 'p2/**', 'feat/**', 'release/**']
+  pull_request:
+    branches: [main, 'p2/**', 'release/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: melink-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php-quality:
+    name: PHP quality and security
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: panel/laravel
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, pdo_sqlite, intl, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate Composer manifest
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Check PHP style
+        run: vendor/bin/pint --test
+
+      - name: Check PHP syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find app bootstrap config database routes tests -type f -name '*.php' -print0 \
+            | xargs -0 -n1 php -l
+
+      - name: Prepare test environment
+        run: |
+          cp .env.example .env.testing
+          sed -i 's/^APP_ENV=.*/APP_ENV=testing/' .env.testing
+          sed -i 's/^APP_DEBUG=.*/APP_DEBUG=false/' .env.testing
+          sed -i 's/^APP_KEY=.*/APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=/' .env.testing
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env.testing
+          sed -i 's/^# DB_DATABASE=.*/DB_DATABASE=:memory:/' .env.testing
+          sed -i 's/^PANEL_REQUIRE_EMAIL_VERIFICATION=.*/PANEL_REQUIRE_EMAIL_VERIFICATION=false/' .env.testing
+          mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache
+
+      - name: Compile views and routes
+        env:
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          APP_ENV: testing
+          APP_DEBUG: 'false'
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: |
+          php artisan view:cache
+          php artisan route:list --except-vendor >/dev/null
+
+      - name: Run test suite
+        env:
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+          APP_ENV: testing
+          APP_DEBUG: 'false'
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: php artisan test --colors=never
+
+      - name: Audit dependencies
+        run: composer audit --locked --no-interaction
+
+  secret-scan:
+    name: Secret pattern scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan tracked files for secret patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -nI -E '(^|[^A-Za-z])(sk_live_|rk_live_|whsec_|AKIA[0-9A-Z]{16}|-----BEGIN (RSA|OPENSSH|EC|PRIVATE) KEY-----)' -- . ':!*.lock'; then
+            echo 'Potential secret pattern found in tracked files.' >&2
+            exit 1
+          fi

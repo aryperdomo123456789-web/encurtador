@@ -17,6 +17,8 @@
 | [`go-to-market-melink-10-10.md`](go-to-market-melink-10-10.md) | ICP, pricing, funil, métricas, canais, suporte e validação comercial | 7 |
 | [`plano-implementacao-produto-top1.md`](plano-implementacao-produto-top1.md) | Pacote já implementado de confiabilidade, campanhas, analytics, QR e billing | Referência |
 | [`landing-redesign-melink.md`](landing-redesign-melink.md) | Redesign da home, copy, assets, CTAs e acessibilidade | Referência |
+| [`runtime-fpm-nginx.md`](runtime-fpm-nginx.md) | PHP-FPM, Nginx, healthcheck, scheduler, queue e rollback | 8 |
+| [`ci-quality.md`](ci-quality.md) | CI, testes, Pint, Composer audit e secret scan | 9 |
 
 ## Sequência de execução
 
