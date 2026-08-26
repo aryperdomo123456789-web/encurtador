@@ -5,7 +5,7 @@
 | Rota | Uso | Autenticacao | Resposta |
 |---|---|---|---|
 | `GET /healthz` | Liveness (Docker/Caddy/uptime) | Publico | 200 sempre que o processo PHP responde |
-| `GET /health/ready` | Readiness (DB + motor Shlink) | Publico | 200 quando tudo OK; 503 quando qualquer dependencia falha |
+| `GET /health/ready` | Readiness (DB + motor de links) | Publico | 200 quando tudo OK; 503 quando qualquer dependencia falha |
 | `GET /up` | Health padrao do Laravel 11 | Publico | Curto-circuito antes do bootstrap do app |
 
 Ambos `/healthz` e `/health/ready` sao registrados **fora** do `Route::domain(PANEL_HOST)`

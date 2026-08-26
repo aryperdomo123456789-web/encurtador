@@ -52,6 +52,11 @@ services:
       LOG_CHANNEL: ${LOG_CHANNEL}
       LOG_STACK: ${LOG_STACK}
       LOG_STDERR_FORMATTER: ${LOG_STDERR_FORMATTER}
+      GEOLITE_LICENSE_KEY: ${GEOLITE_LICENSE_KEY:-}
+      STRIPE_KEY: ${STRIPE_KEY:-}
+      STRIPE_SECRET: ${STRIPE_SECRET:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PREMIUM_PRICE_ID: ${STRIPE_PREMIUM_PRICE_ID:-}
     volumes:
       - ..:/app
       - panel_vendor:/app/panel/laravel/vendor

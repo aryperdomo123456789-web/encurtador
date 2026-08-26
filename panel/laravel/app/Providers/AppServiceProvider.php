@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Contracts\FreeLinkQuotaRepository;
+use App\Models\BrandingSetting;
 use App\Repositories\EloquentFreeLinkQuotaRepository;
 use App\Support\Domains\DomainDnsResolver;
 use App\Support\Domains\SystemDnsResolver;
@@ -11,6 +12,7 @@ use App\Support\Shlink\DomainService;
 use App\Support\Shlink\LinkProvisioner;
 use App\Support\Shlink\ShlinkClient;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -49,6 +51,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        View::composer('*', function ($view): void {
+            $view->with('branding', BrandingSetting::current());
+        });
     }
 }

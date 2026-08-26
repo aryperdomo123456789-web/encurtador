@@ -36,6 +36,7 @@ final class BillingController extends Controller
             'plans'        => $plans,
             'subscription' => $subscription,
             'isPremium'    => (bool) $user->isPremium(),
+            'isOwner'      => (bool) $user->isOwner(),
         ]);
     }
 
@@ -49,6 +50,12 @@ final class BillingController extends Controller
         }
 
         $user = $request->user();
+        if ($user->isOwner()) {
+            return redirect()
+                ->route('billing.index')
+                ->with('status', 'Conta do dono usa acesso interno e nao depende de Stripe.');
+        }
+
         $stripe = new StripeClient($secret);
 
         try {
@@ -83,6 +90,12 @@ final class BillingController extends Controller
     public function portal(Request $request): RedirectResponse
     {
         $user = $request->user();
+        if ($user->isOwner()) {
+            return redirect()
+                ->route('billing.index')
+                ->with('status', 'Conta do dono usa acesso interno e nao depende de Stripe.');
+        }
+
         if ($user->stripe_customer_id === null) {
             return redirect()->route('billing.index')->withErrors([
                 'billing' => 'Nenhuma assinatura ativa encontrada.',
@@ -112,6 +125,7 @@ final class BillingController extends Controller
                 ->where('provider', 'stripe')
                 ->latest('id')->first(),
             'isPremium'    => (bool) $request->user()->fresh()->isPremium(),
+            'isOwner'      => (bool) $request->user()->fresh()->isOwner(),
             'flash'        => 'Pagamento concluido. Se seu plano ainda nao apareceu como Premium, atualize em alguns segundos (aguardando webhook).',
         ]);
     }
@@ -125,6 +139,7 @@ final class BillingController extends Controller
                 ->where('provider', 'stripe')
                 ->latest('id')->first(),
             'isPremium'    => (bool) $request->user()->isPremium(),
+            'isOwner'      => (bool) $request->user()->isOwner(),
             'flash'        => 'Checkout cancelado. Voce continua no plano atual.',
         ]);
     }

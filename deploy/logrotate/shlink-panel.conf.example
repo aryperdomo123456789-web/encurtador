@@ -1,0 +1,17 @@
+/www/wwwlogs/me.vr766.com.log
+/www/wwwlogs/me.vr766.com.error.log
+/www/wwwroot/api-shlink.vr766.com/panel/laravel/storage/logs/*.log
+{
+    weekly
+    rotate 12
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+    su root root
+    sharedscripts
+    postrotate
+        /usr/bin/nginx -s reload >/dev/null 2>&1 || true
+    endscript
+}

@@ -104,6 +104,28 @@ final class CreatePremiumLinkTest extends TestCase
         ])->assertRedirect(route('login'));
     }
 
+    public function test_owner_can_access_premium_endpoints_without_subscription(): void
+    {
+        $owner = User::factory()->create([
+            'email' => 'mago@dono.com',
+            'role'  => 'owner',
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('links.premium'))
+            ->assertOk()
+            ->assertSee('Fluxo premium', false);
+
+        $this->actingAs($owner)
+            ->post(route('links.premium.store'), [
+                'long_url'    => 'https://example.com/campanha',
+                'custom_slug' => 'dono-top',
+            ])
+            ->assertRedirect(route('links.index'));
+
+        $this->assertSame('dono-top', FakePremiumShlinkPayload::$last['customSlug'] ?? null);
+    }
+
     private function premiumUser(): User
     {
         $user = User::factory()->create();

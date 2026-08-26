@@ -12,6 +12,7 @@ final class PanelSmokeTest extends TestCase
     {
         $this->get('/')
             ->assertStatus(200)
-            ->assertSee('Painel Shlink');
+            ->assertSee('MElink')
+            ->assertSee('Criar conta gratuita');
     }
 }

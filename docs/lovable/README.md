@@ -16,7 +16,7 @@ Entregar um caminho unico para o Lovable:
 
 - entender o escopo;
 - priorizar o trabalho por impacto;
-- separar o que pertence ao motor Shlink e o que pertence ao futuro `me.vr766.com`;
+- separar o que pertence ao motor e o que pertence ao futuro `me.vr766.com`;
 - iniciar sem ambiguidade de arquitetura.
 
 ## Como usar

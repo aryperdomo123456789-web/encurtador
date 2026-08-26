@@ -48,7 +48,7 @@ me.vr766.com/
 2. Definir qual e a funcao do host.
 3. Separar claramente rotas publicas e rotas administrativas.
 4. Criar checklist proprio de producao.
-5. Manter o deploy isolado do motor Shlink.
+5. Manter o deploy isolado do motor.
 
 ## Configuracao sugerida para o futuro host
 
@@ -70,7 +70,7 @@ Se o futuro app nao for Laravel, a mesma regra vale:
 ## Arquivo de apoio
 
 - [Checklist de producao do Lovable](../lovable/checklist.md)
-- [Operacao do Shlink no SaaS](../operacao-shlink.md)
+- [Operacao do motor no SaaS](../operacao-shlink.md)
 
 ## Regra principal
 

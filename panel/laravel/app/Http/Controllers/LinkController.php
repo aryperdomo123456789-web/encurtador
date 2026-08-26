@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\MonthlyQuotaUsage;
+use App\Models\ShortLink;
 use App\Support\Shlink\LinkProvisioner;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
@@ -16,12 +18,46 @@ final class LinkController extends Controller
 {
     public function index(): View
     {
-        return view('links.index');
+        $user = request()->user();
+        $monthStart = now('UTC')->startOfMonth();
+        $nextMonthStart = (clone $monthStart)->addMonth();
+        $createdThisMonth = ShortLink::query()
+            ->where('user_id', $user->id)
+            ->whereBetween('created_at', [$monthStart, $nextMonthStart])
+            ->count();
+
+        return view('links.index', [
+            'links' => ShortLink::query()
+                ->where('user_id', $user->id)
+                ->latest('id')
+                ->get(),
+            'createdThisMonth' => $createdThisMonth,
+            'freeLimit' => (int) config('shlink.free_monthly_limit', 5),
+            'remainingFreeLinks' => max(0, (int) config('shlink.free_monthly_limit', 5) - $createdThisMonth),
+            'monthlyUsage' => MonthlyQuotaUsage::query()
+                ->where('user_id', $user->id)
+                ->where('quota_month', $monthStart->format('Y-m'))
+                ->first(),
+            'isPremium' => (bool) $user->isPremium(),
+        ]);
     }
 
     public function create(): View
     {
-        return view('links.create');
+        $user = request()->user();
+        $monthStart = now('UTC')->startOfMonth();
+        $nextMonthStart = (clone $monthStart)->addMonth();
+        $createdThisMonth = ShortLink::query()
+            ->where('user_id', $user->id)
+            ->whereBetween('created_at', [$monthStart, $nextMonthStart])
+            ->count();
+
+        return view('links.create', [
+            'createdThisMonth' => $createdThisMonth,
+            'freeLimit' => (int) config('shlink.free_monthly_limit', 5),
+            'remainingFreeLinks' => max(0, (int) config('shlink.free_monthly_limit', 5) - $createdThisMonth),
+            'isPremium' => (bool) $user->isPremium(),
+        ]);
     }
 
     /**
@@ -72,7 +108,10 @@ final class LinkController extends Controller
     {
         abort_unless((bool) optional($request->user())->isPremium(), 403);
 
-        return view('links.premium');
+        return view('links.premium', [
+            'isPremium' => true,
+            'allowLifetimeLinks' => true,
+        ]);
     }
 
     /**

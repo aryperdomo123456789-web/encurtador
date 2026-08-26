@@ -3,21 +3,21 @@
 ## Topologia
 
 O deploy oficial usa **aaPanel + Nginx + certbot** no host `me.vr766.com`
-(painel) e no upstream do contêiner Shlink. Ver
+(painel) e no upstream do contêiner do motor de links. Ver
 [`docs/topology.md`](topology.md) para a regra completa.
 
 ## Como o certificado e emitido
 
 O painel **nao** emite certificados TLS. No deploy oficial, o aaPanel/Nginx
 faz a camada de borda e cada vhost de dominio proprio aponta direto para o
-motor Shlink na porta 8080.
+motor de links na porta 8080.
 
 Fluxo:
 
 1. O usuario registra o dominio no painel e aponta o DNS para
    `PANEL_CUSTOM_DOMAIN_DNS_TARGET`.
-2. `DomainController::verify` confirma o DNS e chama o Shlink.
-3. O vhost do dominio proprio encaminha tudo direto ao Shlink, sem passar
+2. `DomainController::verify` confirma o DNS e chama o motor.
+3. O vhost do dominio proprio encaminha tudo direto ao motor, sem passar
    pelo Laravel.
 4. O comando `panel:tls:refresh` (agendado a cada 15 minutos em
    `routes/console.php`) sonda `https://<dominio>/` e atualiza
@@ -30,17 +30,17 @@ Fluxo:
 - Cada dominio cadastrado precisa ter vhost que encaminhe `location /`
   direto para o container `shlink` na porta 8080.
 - `me.vr766.com` deve reservar o painel em `/`, `/healthz`, `/health/ready`,
-  `/tls/allow`, `/login`, `/links`, `/domains`, `/billing`, `/analytics`,
-  `/build/`, `/storage/`, `/favicon.ico`, `/robots.txt` e `/up`.
-- O fallback de HTTP para hosts sem vhost dedicado tambem vai direto ao
-  Shlink.
+  `/tls/allow`, `/login`, `/admin`, `/links`, `/domains`, `/billing`,
+  `/analytics`, `/build/`, `/storage/`, `/favicon.ico`, `/robots.txt` e `/up`.
+- O fallback de HTTP para `me.vr766.com/{slug}` vai para o Laravel e é
+  repassado ao motor pela aplicação.
 - Habilitar emissao automatica de certificado on-demand para hosts nao
   pre-configurados usando a autorizacao read-only em
   `GET https://me.vr766.com/tls/allow?domain={host}`.
 - Encaminhar o host recebido para o container `shlink` na porta 8080.
 - Nao interceptar `me.vr766.com` nas rotas administrativas listadas em
   `docs/topology.md`; qualquer outro path do host `me.vr766.com` (inclusive
-  `/{slug}`) vai direto ao Shlink.
+  `/{slug}`) deve passar pelo Laravel para cair no fallback do motor.
 
 Alternativas historicas como Caddy (`on_demand_tls`) ou Traefik
 (`certResolvers.letsencrypt`) fazem o mesmo trabalho conceitual, mas **nao**

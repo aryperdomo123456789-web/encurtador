@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksAuditTrail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class Subscription extends Model
 {
+    use TracksAuditTrail;
+
     protected $fillable = [
         'user_id',
+        'created_by_user_id',
+        'updated_by_user_id',
         'plan_id',
         'provider',
         'provider_customer_id',

@@ -1,11 +1,11 @@
-# Shlink para `api-shlink.vr766.com`
+# MElink para `api-shlink.vr766.com`
 
-Stack base para rodar o Shlink como motor de redirecionamento e API do SaaS.
+Stack base para rodar o MElink como painel SaaS sobre o motor de redirecionamento.
 
 ## O que já existe
 
-- `Shlink` com banco `MariaDB` persistente.
-- `compose.yml` com o backend do Shlink exposto apenas em `127.0.0.1:8080`.
+- motor de links com banco `MariaDB` persistente.
+- `compose.yml` com o backend do motor exposto apenas em `127.0.0.1:8080`.
 - `DEFAULT_DOMAIN` apontando para `api-shlink.vr766.com`.
 - `INITIAL_API_KEY` para a primeira integração do painel.
 - documentação de arquitetura e schema do painel em `docs/` e `sql/`.
@@ -42,9 +42,9 @@ docker compose logs -f shlink
 ## Observações importantes
 
 - `GEOLITE_LICENSE_KEY` está vazio por padrão, então a geolocalização de visitas fica desativada até você preencher essa chave.
-- O Shlink deve ficar isolado do painel administrativo.
+- O motor de links deve ficar isolado do painel administrativo.
 - O painel administrativo fica em `me.vr766.com`.
-- `me.vr766.com/{slug}` e domínios de cliente vão direto para o Shlink no proxy reverso.
+- `me.vr766.com/{slug}` e domínios de cliente vão direto para o motor no proxy reverso.
 - Se você quiser trocar a chave inicial, basta editar `INITIAL_API_KEY` e recriar o container.
 
 ## Guias de produção

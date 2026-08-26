@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\TracksAuditTrail;
 use Illuminate\Database\Eloquent\Model;
 
 final class ShortLink extends Model
 {
+    use TracksAuditTrail;
+
     protected $fillable = [
         'user_id',
+        'created_by_user_id',
+        'updated_by_user_id',
         'customer_domain_id',
         'plan_id',
         'shlink_short_url',

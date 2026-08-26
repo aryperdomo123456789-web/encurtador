@@ -11,12 +11,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'role'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'role',
+    ];
 
     /**
      * Get the attributes that should be cast.
@@ -41,6 +48,16 @@ class User extends Authenticatable
         return $this->hasMany(CustomerDomain::class);
     }
 
+    public function shortLinks(): HasMany
+    {
+        return $this->hasMany(ShortLink::class);
+    }
+
+    public function isOwner(): bool
+    {
+        return $this->role === 'owner';
+    }
+
     /**
      * True se o usuário possui assinatura ativa/trialing em um plano
      * pago (is_free=false) que libera custom slug. Este é o gate mínimo
@@ -49,6 +66,10 @@ class User extends Authenticatable
      */
     public function isPremium(): bool
     {
+        if ($this->isOwner()) {
+            return true;
+        }
+
         return $this->subscriptions()
             ->whereIn('status', ['active', 'trialing'])
             ->whereHas('plan', function ($query): void {
@@ -65,6 +86,10 @@ class User extends Authenticatable
      */
     public function canUseCustomDomain(): bool
     {
+        if ($this->isOwner()) {
+            return true;
+        }
+
         return $this->subscriptions()
             ->whereIn('status', ['active', 'trialing'])
             ->whereHas('plan', function ($query): void {

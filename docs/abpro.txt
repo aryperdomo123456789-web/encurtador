@@ -1,10 +1,10 @@
 CONTEXTO E OBJETIVO GERAL:
-Quero construir a infraestrutura e o painel frontend para um SaaS (Software as a Service) de encurtador de links profissional. O motor de redirecionamento, banco de dados e gerenciamento de domínios será o Shlink (Open Source), rodando via Docker em uma VPS com aaPanel e MariaDB. A aplicação será dividida em dois ambientes principais para garantir máxima estabilidade e isolamento.
+Quero construir a infraestrutura e o painel frontend para um SaaS (Software as a Service) de encurtador de links profissional. O motor de redirecionamento, banco de dados e gerenciamento de domínios será o motor de links, rodando via Docker em uma VPS com aaPanel e MariaDB. A aplicação será dividida em dois ambientes principais para garantir máxima estabilidade e isolamento.
 
 ESTRUTURA DE DOMÍNIOS E ARQUITETURA:
 
 1. api_shlink.vr766.com (O Motor)
-   - Destinado exclusivamente para abrigar a API do Shlink via Docker.
+   - Destinado exclusivamente para abrigar a API do motor via Docker.
    - Não possui interface visual pública, servindo apenas como o backend que processa as requisições do painel SaaS via chamadas de API (REST/cURL).
 
 2. me.vr766.com (O Painel SaaS e Domínio Padrão)
@@ -18,16 +18,16 @@ Modo Gratuito (Visitantes/Testes):
 - O encurtamento utiliza obrigatoriamente o domínio padrão: me.vr766.com
 - O caminho final (slug) deve ser gerado de forma aleatória pelo sistema (Ex: me.vr766.com/bva76jcask).
 - Limite de uso: O usuário só pode encurtar até 5 links por mês (controlado pelo banco de dados MariaDB do painel SaaS).
-- Tempo de expiração: Todos os links gratuitos devem ter validade estrita de 7 dias. O painel deve enviar o parâmetro 'validUntil' na API do Shlink calculando a data atual + 7 dias. Após esse prazo, o link deve parar de funcionar automaticamente.
+- Tempo de expiração: Todos os links gratuitos devem ter validade estrita de 7 dias. O painel deve enviar o parâmetro 'validUntil' na API do motor calculando a data atual + 7 dias. Após esse prazo, o link deve parar de funcionar automaticamente.
 
 Modo Pago / Premium (Dono e Assinantes):
 - Links ilimitados e sem travas de quantidade por mês.
-- Customização Total: O cliente Premium pode definir um nome personalizado para o link utilizando o domínio padrão (Ex: me.vr766.com/nome_personalizado) através do parâmetro 'customSlug' da API do Shlink.
+- Customização Total: O cliente Premium pode definir um nome personalizado para o link utilizando o domínio padrão (Ex: me.vr766.com/nome_personalizado) através do parâmetro 'customSlug' da API do motor.
 - Validade Flexível: O cliente Premium pode escolher uma data de expiração personalizada no calendário ou clicar em um botão de "Link Vitalício / Nunca Expira" (neste caso, o parâmetro 'validUntil' não é enviado à API).
-- Métricas Avançadas: O painel deve consumir o endpoint de 'Visits' do Shlink para renderizar gráficos de cliques em tempo real para o cliente, exibindo: quantidade de cliques, regiões/países, dispositivos, navegadores e sites de origem (referrers).
-- Suporte a Domínio Próprio (CNAME): O cliente pago poderá apontar o domínio dele (Ex: links.cliente.com) via CNAME para 'me.vr766.com'. Quando ele cadastrar o domínio no painel SaaS, o sistema deve disparar uma requisição 'POST /domains' para o Shlink registrar o domínio instantaneamente. O proxy reverso deve ser configurado de forma dinâmica para gerar certificados SSL automaticamente (On-Demand TLS/Let's Encrypt) para os domínios dos clientes.
+- Métricas Avançadas: O painel deve consumir o endpoint de 'Visits' do motor para renderizar gráficos de cliques em tempo real para o cliente, exibindo: quantidade de cliques, regiões/países, dispositivos, navegadores e sites de origem (referrers).
+- Suporte a Domínio Próprio (CNAME): O cliente pago poderá apontar o domínio dele (Ex: links.cliente.com) via CNAME para 'me.vr766.com'. Quando ele cadastrar o domínio no painel SaaS, o sistema deve disparar uma requisição 'POST /domains' para o motor registrar o domínio instantaneamente. O proxy reverso deve ser configurado de forma dinâmica para gerar certificados SSL automaticamente (On-Demand TLS/Let's Encrypt) para os domínios dos clientes.
 
 O QUE PRECISO QUE SEJA DESENVOLVIDO:
 1. A estrutura de banco de dados MariaDB para gerenciar usuários, planos, limites de links criados no mês e domínios vinculados.
-2. A integração do painel frontend em PHP/Node com a API do Shlink (autenticação via API Key, criação de links com parâmetros dinâmicos de expiração/slugs e listagem de relatórios de cliques).
-3. A lógica de rotas para garantir que quando alguém acessar 'me.vr766.com/slug' ou 'dominiodocliente.com/slug', o Shlink faça o redirecionamento ultra-rápido isolado.
+2. A integração do painel frontend em PHP/Node com a API do motor (autenticação via API Key, criação de links com parâmetros dinâmicos de expiração/slugs e listagem de relatórios de cliques).
+3. A lógica de rotas para garantir que quando alguém acessar 'me.vr766.com/slug' ou 'dominiodocliente.com/slug', o motor faça o redirecionamento ultra-rápido isolado.

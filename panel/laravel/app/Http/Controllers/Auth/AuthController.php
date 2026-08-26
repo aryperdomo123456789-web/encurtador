@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
+use App\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,15 @@ final class AuthController extends Controller
         return view('auth.login');
     }
 
+    public function showRegister(Request $request): View|RedirectResponse
+    {
+        if (Auth::check()) {
+            return redirect()->intended(route('dashboard'));
+        }
+
+        return view('auth.register');
+    }
+
     public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
@@ -45,6 +55,27 @@ final class AuthController extends Controller
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard'));
+    }
+
+    public function register(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = User::query()->create([
+            'name' => trim((string) $data['name']),
+            'email' => strtolower(trim((string) $data['email'])),
+            'password' => $data['password'],
+        ]);
+
+        Auth::login($user);
+
+        $request->session()->regenerate();
+
+        return redirect()->route('dashboard')->with('status', 'Conta criada com sucesso. Bem-vindo ao painel.');
     }
 
     public function logout(Request $request): RedirectResponse

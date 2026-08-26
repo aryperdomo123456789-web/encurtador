@@ -179,6 +179,29 @@ final class CustomDomainTest extends TestCase
         $this->assertDatabaseMissing('customer_domains', ['id' => $domain->id]);
     }
 
+    public function test_owner_can_access_domain_flow_without_subscription(): void
+    {
+        $owner = User::factory()->create([
+            'email' => 'mago@dono.com',
+            'role'  => 'owner',
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('domains.index'))
+            ->assertOk()
+            ->assertSee('Gerenciar domínios', false);
+
+        $this->actingAs($owner)
+            ->post(route('domains.store'), ['domain' => 'links.dono.com'])
+            ->assertRedirect(route('domains.index'));
+
+        $this->assertDatabaseHas('customer_domains', [
+            'user_id' => $owner->id,
+            'domain' => 'links.dono.com',
+            'status' => 'pending_dns',
+        ]);
+    }
+
     public function test_verify_is_idempotent_when_domain_already_active(): void
     {
         $user = $this->domainCapableUser();

@@ -1,4 +1,4 @@
-# Plano de Produção do SaaS Shlink
+# Plano de Produção do SaaS MElink
 
 Este documento é o roteiro oficial para levar o sistema do estado atual até o estado de produção completo.
 
@@ -6,7 +6,7 @@ Este documento é o roteiro oficial para levar o sistema do estado atual até o 
 
 Ao concluir este plano, o produto terá:
 
-- motor Shlink isolado em `api-shlink.vr766.com`;
+- motor de links isolado em `api-shlink.vr766.com`;
 - painel SaaS em `me.vr766.com` ou subdomínio administrativo separado;
 - cadastro, login, assinatura e gestão de links;
 - plano gratuito com limite mensal de 5 links e validade de 7 dias;
@@ -19,10 +19,10 @@ Ao concluir este plano, o produto terá:
 
 Já existe:
 
-- stack Docker do Shlink;
+- stack Docker do motor de links;
 - schema MariaDB da camada SaaS;
 - documentação de arquitetura;
-- camada PHP inicial para consumir a API do Shlink;
+- camada PHP inicial para consumir a API do motor;
 - notas técnicas com suposições e decisões.
 
 Ainda falta:
@@ -42,7 +42,7 @@ O sistema só pode ser considerado 100% pronto quando todos os itens abaixo fore
 1. usuário consegue se cadastrar e autenticar;
 2. usuário free cria link com slug aleatório, limite mensal e expiração de 7 dias;
 3. usuário premium cria link com slug customizado e expiração opcional;
-4. domínio próprio pode ser cadastrado, validado e registrado no Shlink;
+4. domínio próprio pode ser cadastrado, validado e registrado no motor;
 5. visitas e métricas aparecem no painel;
 6. redirecionamento acontece sem bloquear o usuário final;
 7. TLS automático funciona nos domínios dos clientes;
@@ -60,12 +60,12 @@ Eliminar ambiguidade antes de codar o painel.
 
 - painel administrativo vai ficar em `me.vr766.com` ou em `/admin`;
 - domínio de slug precisa ser definido separadamente para não colidir com o painel;
-- Shlink continua isolado como motor de redirect.
+- o motor continua isolado como camada de redirect.
 
 ### Resultado esperado
 
 - nenhuma rota administrativa compete com `/{slug}`;
-- o proxy está desenhado para encaminhar o host certo para o Shlink.
+- o proxy está desenhado para encaminhar o host certo para o motor.
 
 ### Critério de aceite
 
@@ -84,7 +84,7 @@ Criar a aplicação principal do SaaS.
 2. configurar banco MariaDB;
 3. instalar starter kit de autenticação;
 4. configurar layout inicial;
-5. ligar `.env` ao Shlink.
+5. ligar `.env` ao motor.
 
 ### Exemplo de implementação
 
@@ -154,18 +154,18 @@ ShortLink::create([
 - a quota free é calculada no banco;
 - o painel consegue saber quem é free, premium e owner.
 
-## Fase 3 - Integração com Shlink
+## Fase 3 - Integração com o motor
 
 ### Objetivo
 
-Criar, consultar e auditar links via API do Shlink.
+Criar, consultar e auditar links via API do motor.
 
 ### Tarefas
 
 1. integrar autenticação `X-Api-Key`;
 2. criar link free com `validUntil` de 7 dias;
 3. criar link premium com `customSlug`;
-4. registrar domínio próprio no Shlink;
+4. registrar domínio próprio no motor;
 5. consultar visitas e estatísticas.
 
 ### Exemplo de implementação
@@ -185,10 +185,10 @@ $domainService->ensureRegistered('links.cliente.com');
 
 ### Critério de aceite
 
-- um link criado no painel aparece no Shlink;
+- um link criado no painel aparece no motor;
 - o link redireciona corretamente;
 - a expiração respeita a regra de negócio;
-- o domínio de cliente é criado e aparece no Shlink.
+- o domínio de cliente é criado e aparece no motor.
 
 ## Fase 4 - Painel administrativo
 
@@ -237,7 +237,7 @@ Permitir domínios de clientes com segurança.
 ### Tarefas
 
 1. validar apontamento DNS CNAME;
-2. registrar domínio no Shlink;
+2. registrar domínio no motor;
 3. armazenar o domínio na base do painel;
 4. provisionar TLS automático no proxy reverso;
 5. tratar domínio suspenso e domínio inválido.
@@ -262,7 +262,7 @@ $domainService->ensureRegistered('links.cliente.com');
 
 ### Objetivo
 
-Exibir dados úteis sem duplicar o motor de analytics do Shlink.
+Exibir dados úteis sem duplicar o motor de analytics.
 
 ### Tarefas
 
@@ -286,7 +286,7 @@ $summary = $analyticsService->summarizeVisits($visits);
 
 - gráficos carregam corretamente;
 - filtros funcionam;
-- dados batem com os totais do Shlink.
+- dados batem com os totais do motor.
 
 ## Fase 7 - Rotas públicas e proxy
 
@@ -296,7 +296,7 @@ Garantir redirecionamento rápido e isolamento.
 
 ### Tarefas
 
-1. configurar proxy reverso do Shlink;
+1. configurar proxy reverso do motor;
 2. encaminhar `Host` e IP real do visitante;
 3. validar coexistência de painel e slugs;
 4. remover qualquer rota conflitante;
@@ -378,7 +378,7 @@ Colocar o sistema em produção com segurança.
 - logs e alertas básicos ativos;
 - domínio principal resolvendo;
 - painel acessível;
-- Shlink respondendo;
+- motor respondendo;
 - TLS automático validado;
 - seeds iniciais aplicados.
 
@@ -387,7 +387,7 @@ Colocar o sistema em produção com segurança.
 1. arquitetura e rotas;
 2. Laravel e autenticação;
 3. schema e models;
-4. integração Shlink;
+4. integração com o motor;
 5. telas do painel;
 6. domínio próprio;
 7. analytics;
@@ -397,4 +397,4 @@ Colocar o sistema em produção com segurança.
 
 ## Resultado esperado
 
-Quando este plano estiver concluído, o sistema estará pronto para operação real de SaaS, com painel, encurtamento, domínio próprio, métricas e isolamento do motor Shlink.
+Quando este plano estiver concluído, o sistema estará pronto para operação real de SaaS, com painel, encurtamento, domínio próprio, métricas e isolamento do motor de links.

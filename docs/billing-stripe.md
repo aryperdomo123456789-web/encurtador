@@ -1,6 +1,6 @@
 # Billing Stripe (PR #12)
 
-Fluxo de assinatura Premium do painel Shlink usando Stripe Checkout e Billing Portal.
+Fluxo de assinatura Premium do MElink usando Stripe Checkout e Billing Portal.
 A fonte da verdade do estado do plano e o webhook `billing/webhook`; a UI de
 `/billing` apenas exibe o que o webhook ja gravou.
 

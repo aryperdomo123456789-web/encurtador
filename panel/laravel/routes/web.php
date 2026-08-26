@@ -2,11 +2,17 @@
 
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Admin\BrandingController;
+use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\RichPreviewController as AdminRichPreviewController;
+use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\LinkController;
+use App\Http\Controllers\RichPreviewController;
+use App\Http\Controllers\PublicRedirectController;
 use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,10 +30,29 @@ $panelRoutes = static function (): void {
     Route::middleware('guest')->group(function (): void {
         Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
         Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
+        Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+        Route::post('/register', [AuthController::class, 'register'])->name('register.attempt');
     });
 
     Route::middleware('auth')->group(function (): void {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+        Route::prefix('/admin')->name('admin.')->group(function (): void {
+            Route::get('/', [UserAdminController::class, 'index'])->name('dashboard');
+            Route::get('/users', [UserAdminController::class, 'index'])->name('users.index');
+            Route::get('/users/{user}', [UserAdminController::class, 'show'])->name('users.show');
+            Route::post('/users/{user}/reset-password', [UserAdminController::class, 'resetPassword'])->name('users.reset-password');
+            Route::get('/branding', [BrandingController::class, 'edit'])->name('branding.edit');
+            Route::post('/branding', [BrandingController::class, 'update'])->name('branding.update');
+            Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+            Route::get('/rich-previews', [AdminRichPreviewController::class, 'index'])->name('rich-previews.index');
+            Route::get('/rich-previews/create', [AdminRichPreviewController::class, 'create'])->name('rich-previews.create');
+            Route::post('/rich-previews', [AdminRichPreviewController::class, 'store'])->name('rich-previews.store');
+            Route::get('/rich-previews/{richPreview}', [AdminRichPreviewController::class, 'edit'])->name('rich-previews.edit');
+            Route::put('/rich-previews/{richPreview}', [AdminRichPreviewController::class, 'update'])->name('rich-previews.update');
+            Route::post('/rich-previews/{richPreview}/duplicate', [AdminRichPreviewController::class, 'duplicate'])->name('rich-previews.duplicate');
+            Route::delete('/rich-previews/{richPreview}', [AdminRichPreviewController::class, 'destroy'])->name('rich-previews.destroy');
+        });
 
         Route::get('/links', [LinkController::class, 'index'])->name('links.index');
         Route::delete('/links/{link}', [LinkController::class, 'destroy'])->name('links.destroy');
@@ -54,8 +79,18 @@ $panelRoutes = static function (): void {
         Route::get('/billing/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
     });
 
+    Route::get('/r/{richPreview:slug}', [RichPreviewController::class, 'show'])->name('rich-previews.public');
+    Route::get('/r/{richPreview:slug}/go', [RichPreviewController::class, 'go'])->name('rich-previews.go');
+
     // Webhook Stripe (publico, autenticado via HMAC).
     Route::post('/billing/webhook', [StripeWebhookController::class, 'handle'])->name('billing.webhook');
+
+    // Fallback público: se a borda nao encaminhar o slug diretamente para o
+    // Shlink, o Laravel repassa a requisição para o motor e devolve a resposta
+    // original sem interferir nos caminhos administrativos acima.
+    Route::match(['GET', 'HEAD'], '/{path}', PublicRedirectController::class)
+        ->where('path', '.*')
+        ->name('public.redirect');
 };
 
 if ($panelHost !== '') {

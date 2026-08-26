@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 
 final class LinkEventLog extends Model
@@ -12,10 +13,12 @@ final class LinkEventLog extends Model
 
     protected $fillable = [
         'short_link_id',
+        'actor_user_id',
         'event_type',
         'severity',
         'message',
         'payload',
+        'request_id',
         'created_at',
     ];
 
@@ -23,4 +26,9 @@ final class LinkEventLog extends Model
         'payload' => 'array',
         'created_at' => 'datetime',
     ];
+
+    public function actor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actor_user_id');
+    }
 }

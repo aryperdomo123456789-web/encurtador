@@ -1,10 +1,10 @@
 # Checklist de producao
 
-Fonte da verdade do progresso rumo a producao do painel Shlink.
+Fonte da verdade do progresso rumo a producao do painel MElink.
 Cada item so muda de estado com PR/commit correspondente.
 
 > **Topologia oficial:** `me.vr766.com` = painel; `api-shlink.vr766.com` = motor;
-> `me.vr766.com/{slug}` e dominios de cliente vao direto ao Shlink. Detalhes em
+> `me.vr766.com/{slug}` e dominios de cliente vao direto ao motor. Detalhes em
 > [`docs/topology.md`](../topology.md). Qualquer texto que cite
 > `app.me.vr766.com` esta obsoleto.
 
@@ -27,10 +27,10 @@ Itens essenciais para o produto funcionar de ponta a ponta.
 
 | Pri | Status | Item |
 |---|---|---|
-| P1 | [x] | Ligar a integracao com Shlink com `X-Api-Key` e `Accept: application/json` |
+| P1 | [x] | Ligar a integracao com o motor com `X-Api-Key` e `Accept: application/json` |
 | P1 | [x] | Criar links free com slug aleatorio e expiracao de 7 dias |
 | P1 | [x] | Criar links premium com `customSlug` |
-| P1 | [x] | Registrar dominio proprio no Shlink depois da validacao |
+| P1 | [x] | Registrar dominio proprio no motor depois da validacao |
 | P1 | [x] | Consultar visitas e analytics no painel |
 | P1 | [x] | Entregar dashboard, lista de links e tela de criacao |
 | P1 | [x] | Entregar telas de dominios e metricas |
@@ -43,4 +43,4 @@ Itens essenciais para o produto funcionar de ponta a ponta.
 | P2 | [x] | Billing Stripe: checkout, portal, webhook, gate premium |
 | P2 | [x] | Reset mensal automatico de cota free |
 | P2 | [x] | Observabilidade: logs estruturados, /healthz, /health/ready, request_id |
-| P2 | [x] | Deploy real em `me.vr766.com` via aaPanel/Nginx (vhost + PHP-FPM + upstream Shlink) |
+| P2 | [x] | Deploy real em `me.vr766.com` via aaPanel/Nginx (vhost + PHP-FPM + upstream do motor) |

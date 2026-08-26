@@ -1,78 +1,148 @@
 @extends('layouts.app')
 
-@section('title', 'Assinatura')
+@section('title', 'MElink | Assinatura')
 
 @section('content')
-<div class="max-w-4xl mx-auto py-8 px-4">
-    <h1 class="text-2xl font-semibold mb-2">Assinatura</h1>
-    <p class="text-gray-600 mb-6">
-        Estado atual:
-        <span class="inline-block px-2 py-0.5 rounded text-xs font-medium
-            {{ $isPremium ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-700' }}">
-            {{ $isPremium ? 'Premium' : 'Free' }}
-        </span>
-    </p>
+    <div class="hero">
+        <section class="hero-card">
+            <span class="eyebrow">Billing e plano</span>
+            <h1 class="page-title">Assinatura</h1>
+            <p class="page-subtitle">
+                A cobrança fica isolada do fluxo de redirecionamento. Use esta área para comparar planos,
+                acompanhar o status Stripe e abrir o portal de gestão quando necessário.
+            </p>
+
+            <div class="hero-actions">
+                @if ($isOwner)
+                    <span class="badge info">Conta do dono</span>
+                @elseif ($isPremium)
+                    <span class="badge success">Plano ativo</span>
+                    <form method="POST" action="{{ route('billing.portal') }}" style="display:inline;">
+                        @csrf
+                        <button type="submit" class="button secondary">Abrir portal</button>
+                    </form>
+                @else
+                    <span class="badge warning">Free</span>
+                    <a class="button secondary" href="#planos">Ver planos</a>
+                @endif
+            </div>
+        </section>
+
+        <aside class="hero-side">
+            <div class="card compact">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Status atual</h2>
+                        <p class="meta">Resumo da última assinatura disponível.</p>
+                    </div>
+                    <span class="badge {{ $isOwner ? 'info' : ($isPremium ? 'success' : 'warning') }}">
+                        {{ $isOwner ? 'owner' : ($isPremium ? 'premium' : 'free') }}
+                    </span>
+                </div>
+
+                <ul class="list">
+                    <li>
+                        <span class="label">Plano atual</span>
+                        <span class="value">{{ $subscription?->plan?->name ?? 'Free' }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Assinatura</span>
+                        <span class="value">{{ $subscription?->stripe_subscription_id ?? $subscription?->provider_subscription_id ?? 'n/d' }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Status Stripe</span>
+                        <span class="value">{{ $subscription?->status ?? 'n/d' }}</span>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+    </div>
 
     @if(!empty($flash))
-        <div class="mb-4 rounded border border-blue-200 bg-blue-50 text-blue-800 px-4 py-3">
+        <div class="alert info" style="border-color: rgba(36, 71, 245, 0.18); background: rgba(36, 71, 245, 0.08); color: #1d4ed8;">
             {{ $flash }}
         </div>
     @endif
 
-    @if(session('status'))
-        <div class="mb-4 rounded border border-green-200 bg-green-50 text-green-800 px-4 py-3">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="mb-4 rounded border border-red-200 bg-red-50 text-red-800 px-4 py-3">
-            <ul class="list-disc list-inside">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <div class="grid md:grid-cols-2 gap-4">
+    <section class="grid cards-2 section" id="planos">
         @foreach($plans as $plan)
-            <div class="rounded-lg border p-5 {{ $plan->slug === 'premium' ? 'border-indigo-400' : 'border-gray-200' }}">
-                <h2 class="text-lg font-semibold">{{ $plan->name }}</h2>
-                <ul class="mt-3 text-sm text-gray-700 space-y-1">
-                    <li>Cota mensal: {{ $plan->monthly_link_quota > 0 ? $plan->monthly_link_quota . ' links' : 'ilimitada' }}</li>
-                    <li>Slug customizado: {{ $plan->allow_custom_slug ? 'sim' : 'nao' }}</li>
-                    <li>Dominio proprio: {{ $plan->allow_custom_domain ? 'sim' : 'nao' }}</li>
-                    <li>Expiracao: {{ $plan->link_expiration_days > 0 ? $plan->link_expiration_days . ' dias' : 'sem expiracao' }}</li>
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">{{ $plan->name }}</h2>
+                        <p class="meta">{{ $plan->description }}</p>
+                    </div>
+                    <span class="badge {{ $plan->is_free ? 'muted' : 'success' }}">
+                        {{ $plan->is_free ? 'free' : 'premium' }}
+                    </span>
+                </div>
+
+                <ul class="list">
+                    <li>
+                        <span class="label">Limite mensal</span>
+                        <span class="value">{{ $plan->monthly_short_url_limit ? $plan->monthly_short_url_limit . ' links' : 'ilimitado' }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Slug customizado</span>
+                        <span class="value">{{ $plan->allow_custom_slug ? 'sim' : 'não' }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Domínio próprio</span>
+                        <span class="value">{{ $plan->allow_custom_domain ? 'sim' : 'não' }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Expiração custom</span>
+                        <span class="value">{{ $plan->allow_custom_expiration ? 'sim' : 'não' }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Links vitalícios</span>
+                        <span class="value">{{ $plan->allow_lifetime_links ? 'sim' : 'não' }}</span>
+                    </li>
                 </ul>
 
-                @if($plan->slug === 'premium')
-                    <div class="mt-4">
-                        @if($isPremium)
+                @if($plan->code === 'premium')
+                    <div class="actions" style="margin-top: 18px;">
+                        @if($isOwner)
+                            <span class="badge info">Acesso do dono liberado</span>
+                        @elseif($isPremium)
                             <form method="POST" action="{{ route('billing.portal') }}">
                                 @csrf
-                                <button class="w-full rounded bg-gray-800 text-white py-2 hover:bg-gray-900">
-                                    Gerenciar assinatura
-                                </button>
+                                <button class="button primary" type="submit">Gerenciar assinatura</button>
                             </form>
                         @else
                             <form method="POST" action="{{ route('billing.checkout') }}">
                                 @csrf
-                                <button class="w-full rounded bg-indigo-600 text-white py-2 hover:bg-indigo-700">
-                                    Assinar Premium
-                                </button>
+                                <button class="button primary" type="submit">Assinar Premium</button>
                             </form>
                         @endif
                     </div>
                 @endif
             </div>
         @endforeach
-    </div>
+    </section>
 
     @if($subscription)
-        <p class="mt-6 text-xs text-gray-500">
-            Assinatura Stripe: {{ $subscription->stripe_subscription_id ?? 'n/d' }} - status {{ $subscription->status }}.
-        </p>
+        <section class="card section">
+            <div class="section-head">
+                <div>
+                    <h2>Detalhes Stripe</h2>
+                    <p>Informação útil para suporte e auditoria.</p>
+                </div>
+            </div>
+            <ul class="list">
+                <li>
+                    <span class="label">Customer</span>
+                    <span class="value">{{ $subscription->provider_customer_id ?? $subscription->user->stripe_customer_id ?? 'n/d' }}</span>
+                </li>
+                <li>
+                    <span class="label">Subscription</span>
+                    <span class="value">{{ $subscription->stripe_subscription_id ?? $subscription->provider_subscription_id ?? 'n/d' }}</span>
+                </li>
+                <li>
+                    <span class="label">Cancelamento no fim do período</span>
+                    <span class="value">{{ $subscription->cancel_at_period_end ? 'sim' : 'não' }}</span>
+                </li>
+            </ul>
+        </section>
     @endif
-</div>
 @endsection

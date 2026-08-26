@@ -1,4 +1,4 @@
-# Plano de Testes do SaaS Shlink
+# Plano de Testes do SaaS MElink
 
 Este documento define os testes que precisam existir para considerar o sistema confiável em produção.
 
@@ -13,7 +13,7 @@ Validar:
 - domínio próprio;
 - métricas;
 - comportamento do proxy;
-- erros da API do Shlink.
+- erros da API do motor.
 
 ## Camadas de teste
 
@@ -44,7 +44,7 @@ public function test_free_links_generate_seven_day_expiration(): void
 
 ### 2. Testes de integração
 
-Validam conversa com Shlink e banco.
+Validam conversa com o motor e banco.
 
 Casos:
 
@@ -145,7 +145,7 @@ $this->assertArrayHasKey('devices', $summary);
 
 Casos:
 
-- `Host` original chega ao Shlink;
+- `Host` original chega ao motor;
 - IP do visitante é preservado;
 - certificado é emitido automaticamente;
 - domínio novo não derruba o serviço.
@@ -160,7 +160,7 @@ Casos:
 | Premium usa domínio próprio | Sucesso |
 | Domínio sem CNAME | Erro claro |
 | Link free após 7 dias | Expirado |
-| API do Shlink retorna 409 | Mensagem tratada |
+| API do motor retorna 409 | Mensagem tratada |
 | Visit report | Gráficos corretos |
 
 ## Tipos de erro que devem ser testados

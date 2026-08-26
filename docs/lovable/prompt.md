@@ -16,7 +16,7 @@ Contexto atual:
 Objetivo do proximo passo:
 
 1. Manter o painel Laravel em producao sem 404.
-2. Separar claramente o motor Shlink do futuro projeto `me.vr766.com`.
+2. Separar claramente o motor do futuro projeto `me.vr766.com`.
 3. Documentar a operacao no aaPanel/Nginx.
 4. Nao misturar arquivos publicos, secrets ou builds entre os ambientes.
 
@@ -40,5 +40,4 @@ Resultado esperado:
 - deploy previsivel;
 - docs claras;
 - nenhum 404 no painel;
-- separacao limpa entre o motor Shlink e o futuro site.
-
+- separacao limpa entre o motor e o futuro site.
