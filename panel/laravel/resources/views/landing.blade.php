@@ -68,10 +68,12 @@
     .mk-link-btn { padding: 11px 14px; color: #3d455a; }
     .mk-link-btn:hover, .mk-btn:hover { transform: translateY(-2px); }
     .mk-btn { padding: 14px 20px; }
-    .mk-btn-primary { color: #fff; background: var(--mk-blue); box-shadow: 0 16px 26px rgba(49, 87, 245, .2); }
+    .mk-page a.mk-btn-primary { color: #fff; background: var(--mk-blue); box-shadow: 0 16px 26px rgba(49, 87, 245, .2); }
     .mk-btn-primary:hover { background: var(--mk-blue-dark); box-shadow: 0 18px 32px rgba(49, 87, 245, .28); }
-    .mk-btn-dark { color: #fff; background: var(--mk-ink); }
-    .mk-btn-light { color: var(--mk-ink); background: #fff; border: 1px solid var(--mk-border); }
+    .mk-page a.mk-btn-dark { color: #fff; background: var(--mk-ink); }
+    .mk-page a.mk-btn-light { color: var(--mk-ink); background: #fff; border: 1px solid var(--mk-border); }
+    .mk-nav a.mk-btn-dark { color: #fff; background: var(--mk-blue); box-shadow: 0 12px 24px rgba(49, 87, 245, .2); }
+    .mk-nav a.mk-btn-dark:hover { color: #fff; background: var(--mk-blue-dark); box-shadow: 0 16px 30px rgba(49, 87, 245, .28); }
     .mk-btn-light:hover { box-shadow: 0 10px 25px rgba(16, 19, 33, .1); }
     .mk-hero { padding: 42px 0 68px; }
     .mk-hero-grid { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); align-items: center; gap: 64px; }
