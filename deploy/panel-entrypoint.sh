@@ -4,6 +4,8 @@ set -eu
 cd /app/panel/laravel
 
 mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R ug+rwX storage bootstrap/cache
 
 composer install --no-interaction --no-dev --prefer-dist --optimize-autoloader
 
