@@ -674,6 +674,7 @@
                 <a class="nav-link {{ request()->routeIs('billing.*') ? 'active' : '' }}" href="{{ route('billing.index') }}">Assinatura</a>
                 <a class="nav-link {{ request()->routeIs('workspaces.*') ? 'active' : '' }}" href="{{ route('workspaces.index') }}">Workspaces</a>
                 <a class="nav-link {{ request()->routeIs('api-tokens.*') ? 'active' : '' }}" href="{{ route('api-tokens.index') }}">API</a>
+                <a class="nav-link {{ request()->routeIs('privacy.*') ? 'active' : '' }}" href="{{ route('privacy.index') }}">Privacidade</a>
                 @if (auth()->user()?->isOwner())
                     <a class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">Admin</a>
                     <a class="nav-link {{ request()->routeIs('admin.branding.*') ? 'active' : '' }}" href="{{ route('admin.branding.edit') }}">Marca</a>

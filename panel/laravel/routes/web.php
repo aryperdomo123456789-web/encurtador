@@ -14,6 +14,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\LinkController;
+use App\Http\Controllers\PrivacyController;
 use App\Http\Controllers\PublicRedirectController;
 use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\RichPreviewController;
@@ -120,6 +121,9 @@ $panelRoutes = static function (): void {
 
         Route::get('/analytics/{shortCode}', [AnalyticsController::class, 'show'])->name('analytics.show');
         Route::get('/analytics/{shortCode}/export', [AnalyticsController::class, 'export'])->name('analytics.export');
+
+        Route::get('/settings/privacy', [PrivacyController::class, 'index'])->name('privacy.index');
+        Route::get('/settings/privacy/export', [PrivacyController::class, 'export'])->name('privacy.export');
 
         Route::get('/settings/api-tokens', [ApiTokenController::class, 'index'])->name('api-tokens.index');
         Route::post('/settings/api-tokens', [ApiTokenController::class, 'store'])->name('api-tokens.store');
