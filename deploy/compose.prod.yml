@@ -97,6 +97,12 @@ services:
     volumes: *panel-volumes
     entrypoint: ["sh", "-lc"]
     command: ["php artisan schedule:work --no-interaction"]
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan about >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - default
       - shlink_shared
@@ -112,6 +118,12 @@ services:
     volumes: *panel-volumes
     entrypoint: ["sh", "-lc"]
     command: ["php artisan queue:work --sleep=3 --tries=3 --timeout=90 --no-interaction"]
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan about >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     networks:
       - default
       - shlink_shared

@@ -18,7 +18,9 @@ php artisan config:clear
 php artisan route:clear
 php artisan view:clear || true
 php artisan migrate --force
-php artisan storage:link || true
+if [ ! -e public/storage ]; then
+  php artisan storage:link
+fi
 
 fpm_children="${FPM_MAX_CHILDREN:-12}"
 fpm_start="${FPM_START_SERVERS:-3}"
