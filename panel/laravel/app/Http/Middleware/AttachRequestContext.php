@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 /**
  * Anexa contexto estruturado a todos os logs da requisicao e propaga
@@ -25,9 +26,16 @@ class AttachRequestContext
 
         $request->attributes->set('request_id', $requestId);
 
+        $userId = null;
+        try {
+            $userId = optional($request->user())->id;
+        } catch (Throwable) {
+            // Health e APIs sem sessão continuam operacionais.
+        }
+
         Log::withContext([
             'request_id' => $requestId,
-            'user_id' => $request->hasSession() ? optional($request->user())->id : null,
+            'user_id' => $userId,
             'ip' => $request->ip(),
             'method' => $request->getMethod(),
             'path' => '/'.ltrim($request->path(), '/'),
