@@ -583,6 +583,8 @@
 </head>
 <body>
 <div class="app-shell">
+    @hasSection('marketing_page')
+    @else
     <header class="topbar">
         <a class="brand" href="{{ route('dashboard') }}">
             <img class="brand-mark" src="{{ $branding->logoUrl() }}" alt="Logo do painel" loading="eager">
@@ -614,8 +616,9 @@
             @endauth
         </nav>
     </header>
+    @endif
 
-    <main class="page">
+    <main class="{{ trim($__env->yieldContent('marketing_page')) !== '' ? 'marketing-main' : 'page' }}">
         @if (session('status'))
             <div class="alert success" role="status">{{ session('status') }}</div>
         @endif
