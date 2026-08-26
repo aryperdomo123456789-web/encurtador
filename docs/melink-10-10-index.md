@@ -20,6 +20,7 @@
 | [`runtime-fpm-nginx.md`](runtime-fpm-nginx.md) | PHP-FPM, Nginx, healthcheck, scheduler, queue e rollback | 8 |
 | [`ci-quality.md`](ci-quality.md) | CI, testes, Pint, Composer audit e secret scan | 9 |
 | [`api-v1-melink.md`](api-v1-melink.md) | Contrato OpenAPI, autenticação, scopes, idempotência e operação | 10 |
+| [`privacy-lgpd-melink.md`](privacy-lgpd-melink.md) | Exportação LGPD, minimização e escopo de dados | 11 |
 
 ## Sequência de execução
 
@@ -42,6 +43,7 @@ O programa 10/10 termina quando o produto demonstrar, em dados reais e não em i
 
 - [`api-v1-melink.md`](api-v1-melink.md): autenticação Bearer, scopes, emissão, revogação, idempotência e contrato OpenAPI público da API v1.
 - `GET /api/v1/openapi.json`: contrato OpenAPI 3.1 público, validado por teste de estrutura e scan de conteúdo sensível.
+- [`privacy-lgpd-melink.md`](privacy-lgpd-melink.md): exportação JSON autenticada, minimização de dados e lacunas de ciclo de vida LGPD.
 - Fluxos de identidade: verificação de e-mail condicional em produção e recuperação de senha com resposta anti-enumeração.
 - Hardening P0: rate limits por finalidade, trusted proxies explícitos, health sem sessão, headers globais e webhook Stripe idempotente.
 - Integridade de links: reserva atômica de quota Free, reconciliação do espelho e proteção contra corridas.
