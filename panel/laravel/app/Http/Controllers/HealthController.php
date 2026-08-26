@@ -59,6 +59,15 @@ class HealthController extends Controller
         return response()->noContent();
     }
 
+    public function release(): JsonResponse
+    {
+        return response()->json([
+            'service' => 'panel',
+            'release' => $this->manifestValue('RELEASE_COMMIT', '/\\A[0-9a-f]{7,40}\\z/i'),
+            'built_at' => $this->manifestValue('RELEASE_BUILT_AT', '/\\A\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z\\z/'),
+        ]);
+    }
+
     public function ready(): JsonResponse
     {
         $checks = [];
@@ -115,5 +124,17 @@ class HealthController extends Controller
             'time' => now()->toIso8601String(),
             'checks' => $checks,
         ], $ok ? 200 : 503);
+    }
+
+    private function manifestValue(string $name, string $pattern): ?string
+    {
+        $path = base_path('../../deploy/'.$name);
+        if (! is_readable($path)) {
+            return null;
+        }
+
+        $value = trim((string) file_get_contents($path));
+
+        return preg_match($pattern, $value) === 1 ? $value : null;
     }
 }

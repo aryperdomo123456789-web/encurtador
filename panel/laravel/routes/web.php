@@ -31,6 +31,10 @@ Route::get('/tls/allow', [HealthController::class, 'tlsAllow'])
     ->withoutMiddleware(['web', StartSession::class, ShareErrorsFromSession::class])
     ->middleware('throttle:health')
     ->name('tls.allow');
+Route::get('/health/release', [HealthController::class, 'release'])
+    ->withoutMiddleware(['web', StartSession::class, ShareErrorsFromSession::class])
+    ->middleware('throttle:health')
+    ->name('health.release');
 Route::get('/healthz', [HealthController::class, 'live'])
     ->withoutMiddleware(['web', StartSession::class, ShareErrorsFromSession::class])
     ->middleware('throttle:health')

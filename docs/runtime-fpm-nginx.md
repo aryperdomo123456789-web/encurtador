@@ -32,19 +32,22 @@ O entrypoint rejeita valores não numéricos ou zero. O container executa `php-f
 
 O Compose consulta `http://127.0.0.1:8000/healthz` a cada 15 segundos, com tolerância inicial de 45 segundos. O endpoint é público, não cria sessão e não retorna mensagens internas de exceção. O readiness continua verificando banco e Shlink e responde `200` somente quando os dois estão operacionais.
 
+O endpoint `GET /health/release` devolve apenas `service`, `release` e `built_at`. Esses valores são lidos dos arquivos `deploy/RELEASE_COMMIT` e `deploy/RELEASE_BUILT_AT`, quando presentes, e passam por validação de formato antes de serem exibidos. O endpoint existe para correlacionar smoke tests, logs e incidentes com o commit realmente aplicado, sem retornar `.env`, versão de infraestrutura ou credenciais.
+
 ## Rollout controlado
 
 1. Criar backup do checkout, ambiente, volume de `vendor`, volume de storage e dump MariaDB.
-2. Construir a imagem com o Dockerfile de FPM e Nginx.
-3. Executar `php-fpm -t` e `nginx -t` dentro do artefato.
-4. Recriar apenas o serviço `panel`; não reiniciar `db` nem `shlink`.
-5. Aguardar o healthcheck ficar saudável.
-6. Validar `/healthz`, `/health/ready`, `/login`, home, fallback e API Shlink.
-7. Observar logs e reinícios durante pelo menos cinco minutos.
+2. Gerar um archive imutável a partir de um SHA específico e registrar `deploy/RELEASE_COMMIT` e `deploy/RELEASE_BUILT_AT`.
+3. Construir a imagem com o Dockerfile de FPM e Nginx, quando houver alteração de imagem.
+4. Executar `php-fpm -t`, `nginx -t` e `docker compose config` dentro do artefato.
+5. Recriar apenas o serviço alterado; não reiniciar `db` nem `shlink` sem motivo explícito.
+6. Aguardar o healthcheck ficar saudável.
+7. Validar `/healthz`, `/health/ready`, `/health/release`, `/login`, home, fallback, OpenAPI e API Shlink.
+8. Conferir `release` contra o SHA promovido e observar logs e reinícios durante pelo menos cinco minutos.
 
 ## Rollback
 
-Em caso de health vermelho, loop de restart, erro de conexão FPM ou aumento de 5xx, interromper o rollout e restaurar o snapshot anterior do checkout/volume. A imagem anterior deve ser retaggeada e o serviço `panel` recriado com o Compose anterior. Banco e Shlink não devem sofrer rollback automático; migrations novas precisam ser compatíveis e reversíveis ou ter procedimento de restauração documentado.
+Em caso de health vermelho, loop de restart, erro de conexão FPM ou aumento de 5xx, interromper o rollout e restaurar o snapshot anterior do checkout/volume. A imagem anterior deve ser retaggeada e o serviço `panel` recriado com o Compose anterior. Validar então `/health/release` para confirmar o SHA anterior. Banco e Shlink não devem sofrer rollback automático; migrations novas precisam ser compatíveis e reversíveis ou ter procedimento de restauração documentado.
 
 ## Limites conhecidos
 
