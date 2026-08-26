@@ -33,6 +33,23 @@ final class ApiTokenManagementTest extends TestCase
         ]);
     }
 
+    public function test_usuario_pode_criar_token_com_scope_de_eventos(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('api-tokens.store'), [
+            'name' => 'Conversões',
+            'scopes' => ['events'],
+            'expires_in_days' => 90,
+        ])->assertOk();
+
+        $this->assertDatabaseHas('api_tokens', [
+            'user_id' => $user->id,
+            'name' => 'Conversões',
+            'scopes' => json_encode(['events']),
+        ]);
+    }
+
     public function test_usuario_pode_revogar_seu_token(): void
     {
         $user = User::factory()->create();

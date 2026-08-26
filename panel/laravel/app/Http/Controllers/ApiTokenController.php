@@ -24,7 +24,7 @@ final class ApiTokenController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:80'],
             'scopes' => ['required', 'array', 'min:1'],
-            'scopes.*' => ['string', 'in:read,write,analytics'],
+            'scopes.*' => ['string', 'in:read,write,analytics,events'],
             'expires_in_days' => ['nullable', 'integer', 'min:0', 'max:730'],
         ]);
 

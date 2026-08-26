@@ -62,6 +62,7 @@
                     <label class="remember"><input type="checkbox" name="scopes[]" value="read" checked> Ler links e conta</label>
                     <label class="remember"><input type="checkbox" name="scopes[]" value="write"> Criar e excluir links</label>
                     <label class="remember"><input type="checkbox" name="scopes[]" value="analytics"> Consultar analytics</label>
+                    <label class="remember"><input type="checkbox" name="scopes[]" value="events"> Registrar conversões</label>
                 </fieldset>
                 <div class="field">
                     <label for="expires_in_days">Expiração</label>
