@@ -22,14 +22,14 @@ final class CustomDomainTest extends TestCase
         parent::setUp();
 
         FakeDomainResolver::$targets = [];
-        FakeDomainShlink::$lastPath  = null;
-        FakeDomainShlink::$lastBody  = null;
+        FakeDomainShlink::$lastPath = null;
+        FakeDomainShlink::$lastBody = null;
 
         config()->set('panel.custom_domain_dns_target', 'me.vr766.com');
         config()->set('panel.host', 'panel.test');
         config()->set('shlink.default_domain', 'me.vr766.com');
 
-        $this->app->instance(DomainDnsResolver::class, new FakeDomainResolver());
+        $this->app->instance(DomainDnsResolver::class, new FakeDomainResolver);
         $this->app->instance(ShlinkClient::class, $this->fakeShlinkClient());
     }
 
@@ -57,9 +57,9 @@ final class CustomDomainTest extends TestCase
             ->assertRedirect(route('domains.index'));
 
         $this->assertDatabaseHas('customer_domains', [
-            'user_id'    => $user->id,
-            'domain'     => 'links.cliente.com',
-            'status'     => 'pending_dns',
+            'user_id' => $user->id,
+            'domain' => 'links.cliente.com',
+            'status' => 'pending_dns',
             'dns_target' => 'me.vr766.com',
         ]);
         // Nada foi enviado ao Shlink antes da verificação.
@@ -94,9 +94,9 @@ final class CustomDomainTest extends TestCase
         $other = $this->domainCapableUser();
 
         CustomerDomain::create([
-            'user_id'    => $owner->id,
-            'domain'     => 'links.cliente.com',
-            'status'     => 'pending_dns',
+            'user_id' => $owner->id,
+            'domain' => 'links.cliente.com',
+            'status' => 'pending_dns',
             'dns_target' => 'me.vr766.com',
             'is_primary' => false,
         ]);
@@ -112,9 +112,9 @@ final class CustomDomainTest extends TestCase
     {
         $user = $this->domainCapableUser();
         $domain = CustomerDomain::create([
-            'user_id'    => $user->id,
-            'domain'     => 'links.cliente.com',
-            'status'     => 'pending_dns',
+            'user_id' => $user->id,
+            'domain' => 'links.cliente.com',
+            'status' => 'pending_dns',
             'dns_target' => 'me.vr766.com',
             'is_primary' => false,
         ]);
@@ -134,9 +134,9 @@ final class CustomDomainTest extends TestCase
     {
         $user = $this->domainCapableUser();
         $domain = CustomerDomain::create([
-            'user_id'    => $user->id,
-            'domain'     => 'links.cliente.com',
-            'status'     => 'pending_dns',
+            'user_id' => $user->id,
+            'domain' => 'links.cliente.com',
+            'status' => 'pending_dns',
             'dns_target' => 'me.vr766.com',
             'is_primary' => false,
         ]);
@@ -161,9 +161,9 @@ final class CustomDomainTest extends TestCase
         $owner = $this->domainCapableUser();
         $other = $this->domainCapableUser();
         $domain = CustomerDomain::create([
-            'user_id'    => $owner->id,
-            'domain'     => 'links.cliente.com',
-            'status'     => 'active',
+            'user_id' => $owner->id,
+            'domain' => 'links.cliente.com',
+            'status' => 'active',
             'dns_target' => 'me.vr766.com',
             'is_primary' => false,
         ]);
@@ -183,7 +183,7 @@ final class CustomDomainTest extends TestCase
     {
         $owner = User::factory()->create([
             'email' => 'mago@dono.com',
-            'role'  => 'owner',
+            'role' => 'owner',
         ]);
 
         $this->actingAs($owner)
@@ -206,12 +206,12 @@ final class CustomDomainTest extends TestCase
     {
         $user = $this->domainCapableUser();
         $domain = CustomerDomain::create([
-            'user_id'         => $user->id,
-            'domain'          => 'links.cliente.com',
-            'status'          => 'active',
-            'dns_target'      => 'me.vr766.com',
+            'user_id' => $user->id,
+            'domain' => 'links.cliente.com',
+            'status' => 'active',
+            'dns_target' => 'me.vr766.com',
             'dns_verified_at' => now()->subDay(),
-            'is_primary'      => false,
+            'is_primary' => false,
         ]);
 
         FakeDomainResolver::$targets = ['me.vr766.com'];
@@ -233,29 +233,29 @@ final class CustomDomainTest extends TestCase
         $user = User::factory()->create();
 
         $plan = Plan::create([
-            'code'                    => 'pro-' . uniqid('', true),
-            'name'                    => 'Pro',
-            'description'             => 'Plano premium para testes',
-            'is_free'                 => false,
+            'code' => 'pro-'.uniqid('', true),
+            'name' => 'Pro',
+            'description' => 'Plano premium para testes',
+            'is_free' => false,
             'monthly_short_url_limit' => 0,
-            'allow_custom_slug'       => true,
-            'allow_custom_domain'     => true,
+            'allow_custom_slug' => true,
+            'allow_custom_domain' => true,
             'allow_custom_expiration' => true,
-            'allow_lifetime_links'    => true,
-            'is_active'               => true,
+            'allow_lifetime_links' => true,
+            'is_active' => true,
         ]);
 
         Subscription::create([
-            'user_id'                  => $user->id,
-            'plan_id'                  => $plan->id,
-            'provider'                 => 'test',
-            'provider_customer_id'     => 'cus_' . uniqid('', true),
-            'provider_subscription_id' => 'sub_' . uniqid('', true),
-            'status'                   => 'active',
-            'current_period_start'     => now(),
-            'current_period_end'       => now()->addMonth(),
-            'cancel_at_period_end'     => false,
-            'metadata'                 => [],
+            'user_id' => $user->id,
+            'plan_id' => $plan->id,
+            'provider' => 'test',
+            'provider_customer_id' => 'cus_'.uniqid('', true),
+            'provider_subscription_id' => 'sub_'.uniqid('', true),
+            'status' => 'active',
+            'current_period_start' => now(),
+            'current_period_end' => now()->addMonth(),
+            'cancel_at_period_end' => false,
+            'metadata' => [],
         ]);
 
         return $user->fresh();
@@ -272,9 +272,9 @@ final class CustomDomainTest extends TestCase
                 if (str_contains($url, '/rest/v3/domains')) {
                     if ($method === 'GET') {
                         return [
-                            'status'  => 200,
+                            'status' => 200,
                             'headers' => ['content-type' => 'application/json'],
-                            'body'    => json_encode(['domains' => ['data' => []]]),
+                            'body' => json_encode(['domains' => ['data' => []]]),
                         ];
                     }
 
@@ -282,9 +282,9 @@ final class CustomDomainTest extends TestCase
                     FakeDomainShlink::$lastBody = $body === null ? [] : (array) json_decode($body, true);
 
                     return [
-                        'status'  => 201,
+                        'status' => 201,
                         'headers' => ['content-type' => 'application/json'],
-                        'body'    => json_encode([
+                        'body' => json_encode([
                             'domain' => FakeDomainShlink::$lastBody['domain'] ?? null,
                             'isDefault' => false,
                         ]),
@@ -292,9 +292,9 @@ final class CustomDomainTest extends TestCase
                 }
 
                 return [
-                    'status'  => 404,
+                    'status' => 404,
                     'headers' => ['content-type' => 'application/json'],
-                    'body'    => json_encode(['error' => 'unexpected route in test']),
+                    'body' => json_encode(['error' => 'unexpected route in test']),
                 ];
             }
         );
@@ -315,6 +315,7 @@ final class FakeDomainResolver implements DomainDnsResolver
 final class FakeDomainShlink
 {
     public static ?string $lastPath = null;
+
     /** @var array<string,mixed>|null */
     public static ?array $lastBody = null;
 }

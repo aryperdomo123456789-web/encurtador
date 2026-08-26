@@ -30,11 +30,11 @@ final class RichPreviewController extends Controller
         $query = RichPreview::query()->with(['user', 'creator', 'updater']);
 
         if ($campaign !== '') {
-            $query->where('campaign_name', 'like', '%' . $campaign . '%');
+            $query->where('campaign_name', 'like', '%'.$campaign.'%');
         }
 
         if ($category !== '') {
-            $query->where('category_name', 'like', '%' . $category . '%');
+            $query->where('category_name', 'like', '%'.$category.'%');
         }
 
         return view('admin.rich-previews.index', [
@@ -72,7 +72,7 @@ final class RichPreviewController extends Controller
         $data = $this->validatePayload($request);
         $slug = $this->resolveSlug($data['slug'] ?? null, $data['title']);
 
-        $richPreview = new RichPreview();
+        $richPreview = new RichPreview;
         $richPreview->fill([
             'user_id' => (int) $request->user()->id,
             'title' => $data['title'],
@@ -153,8 +153,8 @@ final class RichPreviewController extends Controller
             'updated_at',
         ]);
 
-        $copy->title = $richPreview->title . ' - cópia';
-        $copy->slug = $this->resolveSlug($richPreview->slug . '-copia', $richPreview->title . ' cópia');
+        $copy->title = $richPreview->title.' - cópia';
+        $copy->slug = $this->resolveSlug($richPreview->slug.'-copia', $richPreview->title.' cópia');
         $copy->click_count = 0;
         $copy->last_clicked_at = null;
         $copy->is_active = false;
@@ -185,7 +185,7 @@ final class RichPreviewController extends Controller
     {
         return $request->validate([
             'title' => ['required', 'string', 'max:120'],
-            'slug' => ['nullable', 'string', 'max:90', 'unique:rich_previews,slug,' . $ignoreId],
+            'slug' => ['nullable', 'string', 'max:90', 'unique:rich_previews,slug,'.$ignoreId],
             'campaign_name' => ['nullable', 'string', 'max:120'],
             'category_name' => ['nullable', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:500'],
@@ -214,7 +214,7 @@ final class RichPreviewController extends Controller
                 ->exists()
         ) {
             $suffix++;
-            $candidate = $base . '-' . Str::lower(Str::random(4)) . ($suffix > 1 ? '-' . $suffix : '');
+            $candidate = $base.'-'.Str::lower(Str::random(4)).($suffix > 1 ? '-'.$suffix : '');
         }
 
         return $candidate;
@@ -226,15 +226,15 @@ final class RichPreviewController extends Controller
         $directory = storage_path('app/public/rich-previews');
         File::ensureDirectoryExists($directory);
 
-        $name = Str::slug($slug) . '-' . Str::random(16) . '.' . $extension;
+        $name = Str::slug($slug).'-'.Str::random(16).'.'.$extension;
         $upload->move($directory, $name);
 
-        return 'rich-previews/' . $name;
+        return 'rich-previews/'.$name;
     }
 
     private function cloneImagePath(string $currentPath, string $slug): string
     {
-        $source = storage_path('app/public/' . $currentPath);
+        $source = storage_path('app/public/'.$currentPath);
         $directory = storage_path('app/public/rich-previews');
         File::ensureDirectoryExists($directory);
 
@@ -243,17 +243,17 @@ final class RichPreviewController extends Controller
         }
 
         $extension = pathinfo($currentPath, PATHINFO_EXTENSION) ?: 'png';
-        $name = Str::slug($slug) . '-' . Str::random(16) . '.' . strtolower($extension);
+        $name = Str::slug($slug).'-'.Str::random(16).'.'.strtolower($extension);
 
-        File::copy($source, $directory . DIRECTORY_SEPARATOR . $name);
+        File::copy($source, $directory.DIRECTORY_SEPARATOR.$name);
 
-        return 'rich-previews/' . $name;
+        return 'rich-previews/'.$name;
     }
 
     private function deleteIfCustom(?string $path): void
     {
         if ($path !== null && $path !== '') {
-            File::delete(storage_path('app/public/' . $path));
+            File::delete(storage_path('app/public/'.$path));
         }
     }
 }

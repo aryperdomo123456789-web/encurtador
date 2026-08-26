@@ -60,8 +60,8 @@ final class RichPreview extends Model
 
     public function imageUrl(): string
     {
-        if ($this->image_path !== null && $this->image_path !== '' && File::exists(storage_path('app/public/' . $this->image_path))) {
-            return $this->absoluteUrl('storage/' . $this->image_path);
+        if ($this->image_path !== null && $this->image_path !== '' && File::exists(storage_path('app/public/'.$this->image_path))) {
+            return $this->absoluteUrl('storage/'.$this->image_path);
         }
 
         if ($this->image_url !== null && $this->image_url !== '') {
@@ -74,21 +74,21 @@ final class RichPreview extends Model
     public function socialImageUrl(): string
     {
         if ($this->image_path !== null && $this->image_path !== '') {
-            $source = storage_path('app/public/' . $this->image_path);
+            $source = storage_path('app/public/'.$this->image_path);
 
             if (File::exists($source)) {
                 $derivativePath = $this->socialImageDerivativePath($source);
-                $derivativeSource = storage_path('app/public/' . $derivativePath);
+                $derivativeSource = storage_path('app/public/'.$derivativePath);
 
                 if (! File::exists($derivativeSource)) {
                     $this->generateSocialImageDerivative($source, $derivativeSource);
                 }
 
                 if (File::exists($derivativeSource)) {
-                    return $this->absoluteUrl('storage/' . $derivativePath);
+                    return $this->absoluteUrl('storage/'.$derivativePath);
                 }
 
-                return $this->absoluteUrl('storage/' . $this->image_path);
+                return $this->absoluteUrl('storage/'.$this->image_path);
             }
         }
 
@@ -105,7 +105,7 @@ final class RichPreview extends Model
             return false;
         }
 
-        return File::exists(storage_path('app/public/' . $this->image_path));
+        return File::exists(storage_path('app/public/'.$this->image_path));
     }
 
     public function displaySlug(): string
@@ -143,7 +143,7 @@ final class RichPreview extends Model
         $request = request();
 
         if ($request !== null) {
-            return rtrim($request->getSchemeAndHttpHost(), '/') . '/' . $path;
+            return rtrim($request->getSchemeAndHttpHost(), '/').'/'.$path;
         }
 
         return url($path);
@@ -153,9 +153,9 @@ final class RichPreview extends Model
     {
         $base = pathinfo($this->image_path ?? 'rich-preview', PATHINFO_FILENAME);
         $stamp = (string) @filemtime($source);
-        $hash = substr(sha1($base . '|' . $stamp . '|' . (string) @filesize($source)), 0, 12);
+        $hash = substr(sha1($base.'|'.$stamp.'|'.(string) @filesize($source)), 0, 12);
 
-        return 'rich-previews/social/' . Str::slug($base ?: $this->slug ?: 'preview') . '-' . $hash . '.jpg';
+        return 'rich-previews/social/'.Str::slug($base ?: $this->slug ?: 'preview').'-'.$hash.'.jpg';
     }
 
     private function generateSocialImageDerivative(string $source, string $destination): void
@@ -183,6 +183,7 @@ final class RichPreview extends Model
 
         if (! is_resource($background) && ! $background instanceof \GdImage) {
             imagedestroy($sourceImage);
+
             return;
         }
 
@@ -195,6 +196,7 @@ final class RichPreview extends Model
         if ($sourceWidth <= 0 || $sourceHeight <= 0) {
             imagedestroy($sourceImage);
             imagedestroy($background);
+
             return;
         }
 

@@ -7,8 +7,8 @@ namespace App\Models;
 use App\Models\Concerns\TracksAuditTrail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class BrandingSetting extends Model
@@ -86,8 +86,8 @@ class BrandingSetting extends Model
 
     private function resolveUrl(?string $path, string $fallbackAsset): string
     {
-        if ($path !== null && $path !== '' && File::exists(storage_path('app/public/' . $path))) {
-            return $this->absoluteUrl('storage/' . $path);
+        if ($path !== null && $path !== '' && File::exists(storage_path('app/public/'.$path))) {
+            return $this->absoluteUrl('storage/'.$path);
         }
 
         return $this->absoluteUrl($fallbackAsset);
@@ -104,7 +104,7 @@ class BrandingSetting extends Model
         $request = request();
 
         if ($request !== null) {
-            return rtrim($request->getSchemeAndHttpHost(), '/') . '/' . $path;
+            return rtrim($request->getSchemeAndHttpHost(), '/').'/'.$path;
         }
 
         return url($path);

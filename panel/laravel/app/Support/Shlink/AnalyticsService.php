@@ -8,9 +8,7 @@ use DateTimeInterface;
 
 final class AnalyticsService
 {
-    public function __construct(private readonly ShlinkClient $client)
-    {
-    }
+    public function __construct(private readonly ShlinkClient $client) {}
 
     /**
      * @param array{
@@ -66,7 +64,7 @@ final class AnalyticsService
         $query = [];
 
         foreach (['domain', 'startDate', 'endDate', 'page', 'itemsPerPage'] as $key) {
-            if (!array_key_exists($key, $options) || $options[$key] === null) {
+            if (! array_key_exists($key, $options) || $options[$key] === null) {
                 continue;
             }
 
@@ -74,18 +72,20 @@ final class AnalyticsService
 
             if ($value instanceof DateTimeInterface) {
                 $query[$key] = $value;
+
                 continue;
             }
 
             if ($key === 'page' || $key === 'itemsPerPage') {
                 $query[$key] = (int) $value;
+
                 continue;
             }
 
             $query[$key] = trim((string) $value);
         }
 
-        if (!empty($options['excludeBots'])) {
+        if (! empty($options['excludeBots'])) {
             $query['excludeBots'] = true;
         }
 

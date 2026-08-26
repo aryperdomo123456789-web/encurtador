@@ -77,13 +77,13 @@ final class BrandingController extends Controller
         if ($upload instanceof UploadedFile) {
             $this->deleteIfCustom($currentPath);
             $extension = strtolower($upload->getClientOriginalExtension() ?: $upload->extension() ?: 'png');
-            $name = Str::slug($slot) . '-' . Str::random(16) . '.' . $extension;
+            $name = Str::slug($slot).'-'.Str::random(16).'.'.$extension;
 
             $directory = storage_path('app/public/branding');
             File::ensureDirectoryExists($directory);
             $upload->move($directory, $name);
 
-            return 'branding/' . $name;
+            return 'branding/'.$name;
         }
 
         if ($reset) {
@@ -98,7 +98,7 @@ final class BrandingController extends Controller
     private function deleteIfCustom(?string $path): void
     {
         if ($path !== null && $path !== '') {
-            File::delete(storage_path('app/public/' . $path));
+            File::delete(storage_path('app/public/'.$path));
         }
     }
 }

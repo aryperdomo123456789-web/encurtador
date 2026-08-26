@@ -6,6 +6,4 @@ namespace App\Support\Shlink;
 
 use RuntimeException;
 
-class ShlinkException extends RuntimeException
-{
-}
+class ShlinkException extends RuntimeException {}

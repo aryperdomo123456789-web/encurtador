@@ -30,7 +30,7 @@ final class AuditLogController extends Controller
         }
 
         if ($subject !== '') {
-            $query->where('subject_type', 'like', '%' . $subject . '%');
+            $query->where('subject_type', 'like', '%'.$subject.'%');
         }
 
         $logs = $query->latest('id')->limit(200)->get();
