@@ -42,7 +42,8 @@ final class LinkProvisionerTest extends TestCase
 
     public function test_free_link_records_creation_on_repository(): void
     {
-        $quota = new class implements FreeLinkQuotaRepository {
+        $quota = new class implements FreeLinkQuotaRepository
+        {
             /** @var array<int, array<string, mixed>> */
             public array $records = [];
 
@@ -50,6 +51,13 @@ final class LinkProvisionerTest extends TestCase
             {
                 return 0;
             }
+
+            public function reserveFreeLinkCreation(int $userId, int $monthlyLimit): string
+            {
+                return 'test-reservation';
+            }
+
+            public function releaseFreeLinkCreation(int $userId, string $reservationId): void {}
 
             public function recordFreeLinkCreation(int $userId, array $record): void
             {
@@ -69,15 +77,21 @@ final class LinkProvisionerTest extends TestCase
 
     public function test_free_link_rejects_when_monthly_quota_reached(): void
     {
-        $quota = new class implements FreeLinkQuotaRepository {
+        $quota = new class implements FreeLinkQuotaRepository
+        {
             public function countFreeLinksForPeriod(int $userId, DateTimeInterface $from, DateTimeInterface $to): int
             {
                 return 5;
             }
 
-            public function recordFreeLinkCreation(int $userId, array $record): void
+            public function reserveFreeLinkCreation(int $userId, int $monthlyLimit): string
             {
+                throw new DomainException('Monthly free-link limit reached');
             }
+
+            public function releaseFreeLinkCreation(int $userId, string $reservationId): void {}
+
+            public function recordFreeLinkCreation(int $userId, array $record): void {}
         };
 
         [$provisioner] = $this->buildProvisioner(quota: $quota);
@@ -104,20 +118,26 @@ final class LinkProvisionerTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $captured
+     * @param  array<string, mixed>  $captured
      * @return array{0: LinkProvisioner}
      */
     private function buildProvisioner(?FreeLinkQuotaRepository $quota = null, array &$captured = []): array
     {
-        $quota ??= new class implements FreeLinkQuotaRepository {
+        $quota ??= new class implements FreeLinkQuotaRepository
+        {
             public function countFreeLinksForPeriod(int $userId, DateTimeInterface $from, DateTimeInterface $to): int
             {
                 return 0;
             }
 
-            public function recordFreeLinkCreation(int $userId, array $record): void
+            public function reserveFreeLinkCreation(int $userId, int $monthlyLimit): string
             {
+                return 'test-reservation';
             }
+
+            public function releaseFreeLinkCreation(int $userId, string $reservationId): void {}
+
+            public function recordFreeLinkCreation(int $userId, array $record): void {}
         };
 
         $client = new ShlinkClient(
@@ -126,16 +146,16 @@ final class LinkProvisionerTest extends TestCase
             3,
             20,
             function (string $method, string $url, array $headers, ?string $body, int $timeout) use (&$captured): array {
-                $captured['method']  = $method;
-                $captured['url']     = $url;
+                $captured['method'] = $method;
+                $captured['url'] = $url;
                 $captured['payload'] = $body === null ? [] : (array) json_decode($body, true);
 
                 return [
-                    'status'  => 200,
+                    'status' => 200,
                     'headers' => ['content-type' => 'application/json'],
-                    'body'    => json_encode([
-                        'shortCode'   => 'abc123',
-                        'shortUrl'    => 'https://sho.rt/abc123',
+                    'body' => json_encode([
+                        'shortCode' => 'abc123',
+                        'shortUrl' => 'https://sho.rt/abc123',
                         'dateCreated' => '2026-07-01T00:00:00+00:00',
                     ]),
                 ];

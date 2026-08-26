@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Models\Concerns\TracksAuditTrail;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class ShortLink extends Model
 {
@@ -13,6 +14,7 @@ final class ShortLink extends Model
 
     protected $fillable = [
         'user_id',
+        'workspace_id',
         'created_by_user_id',
         'updated_by_user_id',
         'customer_domain_id',
@@ -33,6 +35,11 @@ final class ShortLink extends Model
         'shlink_response',
         'last_stats_sync_at',
     ];
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
+    }
 
     protected $casts = [
         'is_custom_slug' => 'bool',

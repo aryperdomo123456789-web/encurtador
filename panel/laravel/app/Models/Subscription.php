@@ -22,6 +22,7 @@ final class Subscription extends Model
         'provider_subscription_id',
         'stripe_subscription_id',
         'stripe_event_id',
+        'stripe_event_created_at',
         'status',
         'current_period_start',
         'current_period_end',
@@ -33,6 +34,7 @@ final class Subscription extends Model
         'cancel_at_period_end' => 'bool',
         'current_period_start' => 'datetime',
         'current_period_end' => 'datetime',
+        'stripe_event_created_at' => 'integer',
         'metadata' => 'array',
     ];
 

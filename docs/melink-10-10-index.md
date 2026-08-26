@@ -34,3 +34,18 @@ O benchmark primário preservado em [`/home/ubuntu/melink_benchmark_top10_source
 ## Critério de encerramento do programa
 
 O programa 10/10 termina quando o produto demonstrar, em dados reais e não em intenção: ativação repetível, retenção saudável, billing reconciliável, redirect dentro do SLO, analytics de conversão, isolamento de dados, backup restaurado, incidentes operáveis, workspaces funcionais, API documentada e suporte capaz de atender clientes sem intervenção manual do fundador.
+
+## Entregas adicionais da release de plataforma
+
+- [`api-v1-melink.md`](api-v1-melink.md): autenticação Bearer, scopes, emissão, revogação e endpoints da API v1.
+- Fluxos de identidade: verificação de e-mail condicional em produção e recuperação de senha com resposta anti-enumeração.
+- Hardening P0: rate limits por finalidade, trusted proxies explícitos, health sem sessão, headers globais e webhook Stripe idempotente.
+- Integridade de links: reserva atômica de quota Free, reconciliação do espelho e proteção contra corridas.
+
+## Release de plataforma v1
+
+- [`release-plataforma-melink-10-10-v1.md`](release-plataforma-melink-10-10-v1.md): dependências corrigidas, segurança, billing, quota, workspaces, API, edição, exportação, conversões e rollout.
+- `POST /api/v1/events`: ingestão idempotente de conversões por workspace, com hashing de IP/User-Agent.
+- `PATCH /api/v1/links/{id}`: edição do destino sem alterar o slug.
+- `GET /analytics/{shortCode}/export`: exportação CSV filtrada de visitas.
+- Upgrade validado: Laravel 12.68.0, Guzzle 7.15.5 e CommonMark 2.10.0.

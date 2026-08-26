@@ -5,7 +5,10 @@ use App\Http\Controllers\Admin\BrandingController;
 use App\Http\Controllers\Admin\RichPreviewController as AdminRichPreviewController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DomainController;
@@ -15,27 +18,66 @@ use App\Http\Controllers\PublicRedirectController;
 use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\RichPreviewController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\WorkspaceController;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 $panelHost = (string) config('panel.host', '');
 
 // Endpoints de saude ficam fora do domain guard para permitir monitoramento
 // externo (uptime, orquestrador, balanceador) sem depender do PANEL_HOST.
-Route::get('/tls/allow', [HealthController::class, 'tlsAllow'])->name('tls.allow');
-Route::get('/healthz', [HealthController::class, 'live'])->name('health.live');
-Route::get('/health/ready', [HealthController::class, 'ready'])->name('health.ready');
+Route::get('/tls/allow', [HealthController::class, 'tlsAllow'])
+    ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class])
+    ->middleware('throttle:health')
+    ->name('tls.allow');
+Route::get('/healthz', [HealthController::class, 'live'])
+    ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class])
+    ->middleware('throttle:health')
+    ->name('health.live');
+Route::get('/health/ready', [HealthController::class, 'ready'])
+    ->withoutMiddleware([StartSession::class, ShareErrorsFromSession::class])
+    ->middleware('throttle:health')
+    ->name('health.ready');
 
 $panelRoutes = static function (): void {
     Route::get('/', DashboardController::class)->name('dashboard');
 
     Route::middleware('guest')->group(function (): void {
         Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-        Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
+        Route::post('/login', [AuthController::class, 'login'])
+            ->middleware('throttle:auth-login')
+            ->name('login.attempt');
         Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-        Route::post('/register', [AuthController::class, 'register'])->name('register.attempt');
+        Route::post('/register', [AuthController::class, 'register'])
+            ->middleware('throttle:auth-register')
+            ->name('register.attempt');
+        Route::get('/forgot-password', [PasswordResetController::class, 'requestForm'])->name('password.request');
+        Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])
+            ->middleware('throttle:auth-login')
+            ->name('password.email');
+        Route::get('/reset-password/{token}', [PasswordResetController::class, 'resetForm'])->name('password.reset');
+        Route::post('/reset-password', [PasswordResetController::class, 'reset'])
+            ->middleware('throttle:auth-login')
+            ->name('password.update');
     });
 
     Route::middleware('auth')->group(function (): void {
+        Route::get('/email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
+        Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+            ->middleware(['signed', 'throttle:auth-register'])
+            ->name('verification.verify');
+        Route::post('/email/verification-notification', [EmailVerificationController::class, 'send'])
+            ->middleware('throttle:auth-register')
+            ->name('verification.send');
+    });
+
+    $authenticatedMiddleware = ['auth'];
+    if ((bool) config('panel.require_email_verification')) {
+        $authenticatedMiddleware[] = 'verified';
+    }
+
+    Route::middleware($authenticatedMiddleware)->group(function (): void {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
         Route::prefix('/admin')->name('admin.')->group(function (): void {
@@ -57,6 +99,7 @@ $panelRoutes = static function (): void {
 
         Route::get('/links', [LinkController::class, 'index'])->name('links.index');
         Route::get('/links/{link}/qr', QrCodeController::class)->name('links.qr');
+        Route::patch('/links/{link}', [LinkController::class, 'update'])->name('links.update');
         Route::delete('/links/{link}', [LinkController::class, 'destroy'])->name('links.destroy');
 
         Route::get('/links/create', [LinkController::class, 'create'])->name('links.create');
@@ -72,6 +115,17 @@ $panelRoutes = static function (): void {
         Route::delete('/domains/{customerDomain}', [DomainController::class, 'destroy'])->name('domains.destroy');
 
         Route::get('/analytics/{shortCode}', [AnalyticsController::class, 'show'])->name('analytics.show');
+        Route::get('/analytics/{shortCode}/export', [AnalyticsController::class, 'export'])->name('analytics.export');
+
+        Route::get('/settings/api-tokens', [ApiTokenController::class, 'index'])->name('api-tokens.index');
+        Route::post('/settings/api-tokens', [ApiTokenController::class, 'store'])->name('api-tokens.store');
+        Route::delete('/settings/api-tokens/{apiToken}', [ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
+
+        Route::get('/settings/workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
+        Route::post('/settings/workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
+        Route::post('/settings/workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('workspaces.switch');
+        Route::post('/settings/workspaces/{workspace}/members', [WorkspaceController::class, 'addMember'])->name('workspaces.members.add');
+        Route::delete('/settings/workspaces/{workspace}/members/{member}', [WorkspaceController::class, 'removeMember'])->name('workspaces.members.remove');
 
         // Billing (Stripe). Estado real e atualizado pelo webhook.
         Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');

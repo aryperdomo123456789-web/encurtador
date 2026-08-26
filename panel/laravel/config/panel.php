@@ -34,7 +34,17 @@ return [
     |
     */
 
-    'trusted_proxies' => env('TRUSTED_PROXIES', '*'),
+    'trusted_proxies' => env('TRUSTED_PROXIES', '127.0.0.1,::1'),
+
+    'login_rate_limit' => (int) env('PANEL_LOGIN_RATE_LIMIT', 10),
+    'register_rate_limit' => (int) env('PANEL_REGISTER_RATE_LIMIT', 5),
+    'health_rate_limit' => (int) env('PANEL_HEALTH_RATE_LIMIT', 60),
+    'api_rate_limit' => (int) env('PANEL_API_RATE_LIMIT', 120),
+    'api_token_expiry_days' => (int) env('PANEL_API_TOKEN_EXPIRY_DAYS', 365),
+    'require_email_verification' => (bool) env(
+        'PANEL_REQUIRE_EMAIL_VERIFICATION',
+        env('APP_ENV', 'local') === 'production'
+    ),
 
     /*
     |--------------------------------------------------------------------------

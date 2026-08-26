@@ -49,6 +49,25 @@ final class AnalyticsDashboardTest extends TestCase
             ->assertSee('O link continua ativo', false);
     }
 
+    public function test_owner_can_export_filtered_analytics_as_csv(): void
+    {
+        $user = User::factory()->create();
+        $link = $this->linkFor($user);
+        $this->app->instance(ShlinkClient::class, $this->fakeAnalyticsClient());
+
+        $response = $this->actingAs($user)->get(route('analytics.export', [
+            'shortCode' => $link->shlink_short_code,
+            'startDate' => '2026-08-01',
+            'endDate' => '2026-08-26',
+        ]));
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'text/csv; charset=UTF-8')
+            ->assertHeader('content-disposition', 'attachment; filename=melink-promo-verao-analytics.csv');
+        $this->assertStringContainsString('data,tipo,pais', $response->streamedContent());
+        $this->assertStringContainsString('Brasil', $response->streamedContent());
+    }
+
     public function test_user_cannot_view_another_users_analytics(): void
     {
         $owner = User::factory()->create();

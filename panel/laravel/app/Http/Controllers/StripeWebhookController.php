@@ -16,7 +16,7 @@ use Throwable;
 
 /**
  * Webhook Stripe: fonte da verdade do estado de assinatura.
- * Idempotente via stripe_event_id.
+ * Deliveries sao reclamados atomicamente em stripe_event_deliveries.
  */
 final class StripeWebhookController extends Controller
 {
@@ -25,64 +25,128 @@ final class StripeWebhookController extends Controller
         $secret = (string) config('services.stripe.webhook_secret');
         if ($secret === '') {
             Log::error('billing.webhook.missing_secret');
+
             return response()->json(['error' => 'webhook not configured'], 500);
         }
 
         $signature = (string) $request->header('Stripe-Signature', '');
-        $payload   = $request->getContent();
+        $payload = $request->getContent();
 
         try {
             $event = Webhook::constructEvent($payload, $signature, $secret);
         } catch (Throwable $e) {
-            Log::warning('billing.webhook.invalid_signature', ['error' => $e->getMessage()]);
+            Log::warning('billing.webhook.invalid_signature', [
+                'exception' => $e::class,
+            ]);
+
             return response()->json(['error' => 'invalid signature'], 400);
         }
 
-        $eventId   = (string) ($event->id ?? '');
+        $eventId = (string) ($event->id ?? '');
         $eventType = (string) ($event->type ?? '');
+        $eventCreatedAt = isset($event->created) ? (int) $event->created : null;
 
-        // Idempotencia: mesmo event_id nao roda duas vezes.
-        if ($eventId !== '' && Subscription::query()->where('stripe_event_id', $eventId)->exists()) {
+        if ($eventId === '') {
+            Log::warning('billing.webhook.missing_event_id', ['type' => $eventType]);
+
+            return response()->json(['error' => 'invalid event'], 400);
+        }
+
+        if (! $this->claimDelivery($eventId, $eventType, $eventCreatedAt)) {
             return response()->json(['status' => 'duplicate', 'id' => $eventId]);
         }
 
         try {
-            DB::transaction(function () use ($event, $eventType, $eventId): void {
+            DB::transaction(function () use ($event, $eventType, $eventId, $eventCreatedAt): void {
                 $object = $event->data->object ?? null;
                 if ($object === null) {
                     return;
                 }
 
                 match ($eventType) {
-                    'checkout.session.completed'     => $this->onCheckoutCompleted($object, $eventId),
-                    'customer.subscription.updated'  => $this->onSubscriptionUpdated($object, $eventId),
-                    'customer.subscription.deleted'  => $this->onSubscriptionDeleted($object, $eventId),
-                    'invoice.payment_failed'         => $this->onPaymentFailed($object, $eventId),
-                    default                          => null,
+                    'checkout.session.completed' => $this->onCheckoutCompleted($object, $eventId, $eventCreatedAt),
+                    'customer.subscription.updated' => $this->onSubscriptionUpdated($object, $eventId, $eventCreatedAt),
+                    'customer.subscription.deleted' => $this->onSubscriptionDeleted($object, $eventId, $eventCreatedAt),
+                    'invoice.payment_failed' => $this->onPaymentFailed($object, $eventId),
+                    default => null,
                 };
             });
+
+            DB::table('stripe_event_deliveries')
+                ->where('event_id', $eventId)
+                ->update([
+                    'status' => 'processed',
+                    'processed_at' => now(),
+                    'last_error' => null,
+                    'updated_at' => now(),
+                ]);
         } catch (Throwable $e) {
+            DB::table('stripe_event_deliveries')
+                ->where('event_id', $eventId)
+                ->update([
+                    'status' => 'failed',
+                    'last_error' => mb_substr($e->getMessage(), 0, 1000),
+                    'updated_at' => now(),
+                ]);
+
             report($e);
             Log::error('billing.webhook.exception', [
-                'type'  => $eventType,
-                'id'    => $eventId,
-                'error' => $e->getMessage(),
+                'type' => $eventType,
+                'id' => $eventId,
+                'exception' => $e::class,
             ]);
+
             return response()->json(['error' => 'processing failed'], 500);
         }
 
         return response()->json(['status' => 'ok', 'type' => $eventType, 'id' => $eventId]);
     }
 
-    private function onCheckoutCompleted(object $session, string $eventId): void
+    private function claimDelivery(string $eventId, string $eventType, ?int $createdAt): bool
+    {
+        $now = now();
+        $inserted = DB::table('stripe_event_deliveries')->insertOrIgnore([
+            'event_id' => $eventId,
+            'event_type' => $eventType !== '' ? $eventType : null,
+            'provider_created_at' => $createdAt,
+            'status' => 'processing',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        if ($inserted === 1) {
+            return true;
+        }
+
+        return DB::table('stripe_event_deliveries')
+            ->where('event_id', $eventId)
+            ->where(function ($query): void {
+                $query->whereIn('status', ['received', 'failed'])
+                    ->orWhere(function ($stale): void {
+                        $stale->where('status', 'processing')
+                            ->where('updated_at', '<', now()->subMinutes(10));
+                    });
+            })
+            ->update([
+                'status' => 'processing',
+                'last_error' => null,
+                'updated_at' => $now,
+            ]) === 1;
+    }
+
+    private function onCheckoutCompleted(object $session, string $eventId, ?int $eventCreatedAt): void
     {
         $userId = (int) ($session->metadata->user_id ?? 0);
         $customerId = (string) ($session->customer ?? '');
         $subscriptionId = (string) ($session->subscription ?? '');
 
-        $user = $userId > 0 ? User::find($userId) : User::query()->where('stripe_customer_id', $customerId)->first();
+        $user = $userId > 0
+            ? User::find($userId)
+            : User::query()->where('stripe_customer_id', $customerId)->first();
+
         if ($user === null) {
             Log::warning('billing.webhook.user_not_found', ['session_id' => $session->id ?? null]);
+
             return;
         }
 
@@ -90,85 +154,113 @@ final class StripeWebhookController extends Controller
             $user->forceFill(['stripe_customer_id' => $customerId])->save();
         }
 
-        $this->activatePremium($user, $subscriptionId, $eventId);
+        $this->syncSubscription($user, 'active', $subscriptionId, $eventId, $eventCreatedAt);
     }
 
-    private function onSubscriptionUpdated(object $subscription, string $eventId): void
-    {
-        $customerId = (string) ($subscription->customer ?? '');
-        $status     = (string) ($subscription->status ?? '');
-        $user = User::query()->where('stripe_customer_id', $customerId)->first();
-        if ($user === null) {
-            return;
-        }
-
-        if (in_array($status, ['active', 'trialing'], true)) {
-            $this->activatePremium($user, (string) $subscription->id, $eventId);
-            return;
-        }
-
-        if (in_array($status, ['canceled', 'unpaid', 'incomplete_expired'], true)) {
-            $this->revertToFree($user, (string) $subscription->id, $eventId);
-        }
-    }
-
-    private function onSubscriptionDeleted(object $subscription, string $eventId): void
+    private function onSubscriptionUpdated(object $subscription, string $eventId, ?int $eventCreatedAt): void
     {
         $customerId = (string) ($subscription->customer ?? '');
         $user = User::query()->where('stripe_customer_id', $customerId)->first();
         if ($user === null) {
             return;
         }
-        $this->revertToFree($user, (string) $subscription->id, $eventId);
+
+        $status = (string) ($subscription->status ?? '');
+        $subscriptionId = (string) ($subscription->id ?? '');
+        $this->syncSubscription($user, $status !== '' ? $status : 'unknown', $subscriptionId, $eventId, $eventCreatedAt, $subscription);
+    }
+
+    private function onSubscriptionDeleted(object $subscription, string $eventId, ?int $eventCreatedAt): void
+    {
+        $customerId = (string) ($subscription->customer ?? '');
+        $user = User::query()->where('stripe_customer_id', $customerId)->first();
+        if ($user === null) {
+            return;
+        }
+
+        $this->syncSubscription(
+            $user,
+            'canceled',
+            (string) ($subscription->id ?? ''),
+            $eventId,
+            $eventCreatedAt,
+            $subscription
+        );
     }
 
     private function onPaymentFailed(object $invoice, string $eventId): void
     {
-        $customerId = (string) ($invoice->customer ?? '');
         Log::warning('billing.webhook.payment_failed', [
-            'customer' => $customerId,
+            'customer' => (string) ($invoice->customer ?? ''),
             'event_id' => $eventId,
         ]);
-        // Nao rebaixa imediatamente: Stripe reprocessa. subscription.updated cuidara se falhar de vez.
     }
 
-    private function activatePremium(User $user, string $subscriptionId, string $eventId): void
-    {
-        $premium = Plan::query()->where('code', 'premium')->first();
-        if ($premium === null) {
-            Log::error('billing.webhook.premium_plan_missing');
+    private function syncSubscription(
+        User $user,
+        string $status,
+        string $subscriptionId,
+        string $eventId,
+        ?int $eventCreatedAt,
+        ?object $stripeSubscription = null
+    ): void {
+        $current = Subscription::query()
+            ->where('user_id', $user->id)
+            ->where('provider', 'stripe')
+            ->first();
+
+        if (
+            $eventCreatedAt !== null
+            && $current?->stripe_event_created_at !== null
+            && $eventCreatedAt < (int) $current->stripe_event_created_at
+        ) {
+            Log::notice('billing.webhook.out_of_order_ignored', [
+                'user_id' => $user->id,
+                'event_id' => $eventId,
+            ]);
+
             return;
         }
 
-        Subscription::updateOrCreate(
+        $premium = Plan::query()->where('code', 'premium')->first();
+        if ($premium === null) {
+            Log::error('billing.webhook.premium_plan_missing');
+
+            return;
+        }
+
+        $isPaidState = in_array($status, ['active', 'trialing'], true);
+        $isTerminalState = in_array($status, ['canceled', 'unpaid', 'incomplete_expired'], true);
+        $planId = $isTerminalState
+            ? Plan::query()->where('code', 'free')->value('id')
+            : $premium->id;
+
+        Subscription::query()->updateOrCreate(
             [
-                'user_id'  => $user->id,
+                'user_id' => $user->id,
                 'provider' => 'stripe',
             ],
             [
-                'plan_id'                => $premium->id,
-                'status'                 => 'active',
-                'provider_customer_id'   => $user->stripe_customer_id,
-                'provider_subscription_id' => $subscriptionId ?: null,
-                'stripe_subscription_id' => $subscriptionId ?: null,
-                'stripe_event_id'        => $eventId ?: null,
-                'current_period_end'     => null,
+                'plan_id' => $planId ?: $premium->id,
+                'status' => $isPaidState ? $status : $status,
+                'provider_customer_id' => $user->stripe_customer_id,
+                'provider_subscription_id' => $subscriptionId !== '' ? $subscriptionId : null,
+                'stripe_subscription_id' => $subscriptionId !== '' ? $subscriptionId : null,
+                'stripe_event_id' => $eventId,
+                'stripe_event_created_at' => $eventCreatedAt,
+                'current_period_start' => $this->periodDate($stripeSubscription?->current_period_start ?? null),
+                'current_period_end' => $this->periodDate($stripeSubscription?->current_period_end ?? null),
+                'cancel_at_period_end' => (bool) ($stripeSubscription?->cancel_at_period_end ?? false),
             ]
         );
     }
 
-    private function revertToFree(User $user, string $subscriptionId, string $eventId): void
+    private function periodDate(mixed $timestamp): ?string
     {
-        $free = Plan::query()->where('code', 'free')->first();
+        if (! is_numeric($timestamp) || (int) $timestamp <= 0) {
+            return null;
+        }
 
-        Subscription::query()
-            ->where('user_id', $user->id)
-            ->where('provider', 'stripe')
-            ->update([
-                'plan_id'                  => $free?->id,
-                'status'                   => 'canceled',
-                'stripe_subscription_id'    => $subscriptionId ?: null,
-                'stripe_event_id'          => $eventId ?: null,
-            ]);
+        return gmdate('Y-m-d H:i:s', (int) $timestamp);
     }
 }

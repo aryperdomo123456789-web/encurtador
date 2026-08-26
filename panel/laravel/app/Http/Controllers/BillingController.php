@@ -9,6 +9,7 @@ use App\Models\Subscription;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Stripe\BillingPortal\Session as PortalSession;
 use Stripe\StripeClient;
@@ -23,7 +24,7 @@ final class BillingController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $plans = Plan::query()->orderBy('id')->get();
+        $plans = Plan::query()->where('is_active', true)->orderBy('id')->get();
         $subscription = Subscription::query()
             ->where('user_id', $user->id)
             ->where('provider', 'stripe')
@@ -54,6 +55,17 @@ final class BillingController extends Controller
                 ->with('status', 'Conta do dono usa acesso interno e nao depende de Stripe.');
         }
 
+        if ($user->isPremium()) {
+            return redirect()
+                ->route('billing.index')
+                ->with('status', 'Sua conta já está em um plano Premium ativo.');
+        }
+
+        $idempotencyKey = (string) $request->header('Idempotency-Key', '');
+        if (! preg_match('/^[A-Za-z0-9._:-]{1,80}$/', $idempotencyKey)) {
+            $idempotencyKey = (string) Str::uuid();
+        }
+
         $stripe = new StripeClient($secret);
 
         try {
@@ -62,6 +74,8 @@ final class BillingController extends Controller
                     'email' => $user->email,
                     'name' => $user->name,
                     'metadata' => ['user_id' => (string) $user->id],
+                ], [
+                    'idempotency_key' => 'melink-customer-'.$user->id,
                 ]);
                 $user->forceFill(['stripe_customer_id' => $customer->id])->save();
             }
@@ -76,6 +90,8 @@ final class BillingController extends Controller
                 'success_url' => route('billing.success').'?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => route('billing.cancel'),
                 'metadata' => ['user_id' => (string) $user->id],
+            ], [
+                'idempotency_key' => 'melink-checkout-'.$user->id.'-'.$idempotencyKey,
             ]);
         } catch (Throwable $e) {
             report($e);

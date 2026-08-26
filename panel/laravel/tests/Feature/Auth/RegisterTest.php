@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 final class RegisterTest extends TestCase
@@ -36,6 +38,23 @@ final class RegisterTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => 'nova@empresa.com',
         ]);
+    }
+
+    public function test_register_requires_email_verification_when_enabled(): void
+    {
+        config()->set('panel.require_email_verification', true);
+        Notification::fake();
+
+        $response = $this->post(route('register.attempt'), [
+            'name' => 'Conta Pendente',
+            'email' => 'pendente@empresa.com',
+            'password' => 'senha-super-segura',
+            'password_confirmation' => 'senha-super-segura',
+        ]);
+
+        $response->assertRedirect(route('verification.notice'));
+        $this->assertAuthenticated();
+        Notification::assertSentTo(User::where('email', 'pendente@empresa.com')->firstOrFail(), VerifyEmail::class);
     }
 
     public function test_register_rejects_duplicate_email(): void

@@ -17,7 +17,10 @@ class HealthCheckTest extends TestCase
         $response = $this->get('/healthz');
 
         $response->assertOk()
-            ->assertJson(['status' => 'ok', 'service' => 'panel']);
+            ->assertJson(['status' => 'ok', 'service' => 'panel'])
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-Frame-Options', 'SAMEORIGIN')
+            ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     }
 
     public function test_readiness_ok_quando_db_e_shlink_respondem(): void
@@ -47,6 +50,15 @@ class HealthCheckTest extends TestCase
         $response->assertStatus(503)
             ->assertJsonPath('status', 'degraded')
             ->assertJsonPath('checks.shlink.status', 'fail');
+
+        $this->assertArrayNotHasKey('error', $response->json('checks.shlink'));
+    }
+
+    public function test_health_nao_emite_cookie_de_sessao(): void
+    {
+        $response = $this->get('/healthz');
+
+        $this->assertCount(0, $response->headers->getCookies());
     }
 
     public function test_response_traz_x_request_id_no_header(): void

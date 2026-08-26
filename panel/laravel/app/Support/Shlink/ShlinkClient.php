@@ -9,7 +9,7 @@ use DateTimeInterface;
 final class ShlinkClient
 {
     /**
-     * @param callable|null $transport
+     * @param  callable|null  $transport
      */
     public function __construct(
         private string $baseUrl,
@@ -43,17 +43,22 @@ final class ShlinkClient
 
     public function getShortUrlVisits(string $shortCode, array $query = []): array
     {
-        return $this->request('GET', '/short-urls/' . rawurlencode($shortCode) . '/visits', $query);
+        return $this->request('GET', '/short-urls/'.rawurlencode($shortCode).'/visits', $query);
+    }
+
+    public function updateShortUrl(string $shortCode, array $payload): array
+    {
+        return $this->request('PATCH', '/short-urls/'.rawurlencode($shortCode), [], $payload);
     }
 
     public function deleteShortUrl(string $shortCode): void
     {
-        $this->request('DELETE', '/short-urls/' . rawurlencode($shortCode));
+        $this->request('DELETE', '/short-urls/'.rawurlencode($shortCode));
     }
 
     public function getDomainVisits(string $domain, array $query = []): array
     {
-        return $this->request('GET', '/domains/' . rawurlencode($domain) . '/visits', $query);
+        return $this->request('GET', '/domains/'.rawurlencode($domain).'/visits', $query);
     }
 
     public function request(string $method, string $path, array $query = [], ?array $payload = null, array $headers = []): array
@@ -84,9 +89,9 @@ final class ShlinkClient
             return [];
         }
 
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             throw new ShlinkUnexpectedResponseException(
-                $method . ' ' . $url . ' returned a non-JSON response.',
+                $method.' '.$url.' returned a non-JSON response.',
                 $statusCode,
                 $responseBody
             );
@@ -102,8 +107,8 @@ final class ShlinkClient
 
     private function buildUrl(string $path, array $query = []): string
     {
-        $path = '/' . ltrim($path, '/');
-        $url = rtrim($this->baseUrl, '/') . '/rest/v' . $this->apiVersion . $path;
+        $path = '/'.ltrim($path, '/');
+        $url = rtrim($this->baseUrl, '/').'/rest/v'.$this->apiVersion.$path;
 
         if ($query === []) {
             return $url;
@@ -112,7 +117,7 @@ final class ShlinkClient
         $query = $this->normalizeArrayForQuery($query);
         $queryString = http_build_query($query, '', '&', PHP_QUERY_RFC3986);
 
-        return $queryString === '' ? $url : $url . '?' . $queryString;
+        return $queryString === '' ? $url : $url.'?'.$queryString;
     }
 
     private function normalizeBaseUrl(string $baseUrl): string
@@ -135,16 +140,19 @@ final class ShlinkClient
 
             if (is_array($item)) {
                 $normalized[$key] = $this->normalizeArrayForQuery($item);
+
                 continue;
             }
 
             if ($item instanceof DateTimeInterface) {
                 $normalized[$key] = $this->normalizeDateTime($item);
+
                 continue;
             }
 
             if (is_bool($item)) {
                 $normalized[$key] = $item ? 'true' : 'false';
+
                 continue;
             }
 
@@ -165,11 +173,13 @@ final class ShlinkClient
 
             if (is_array($item)) {
                 $normalized[$key] = $this->normalizeArrayForJson($item);
+
                 continue;
             }
 
             if ($item instanceof DateTimeInterface) {
                 $normalized[$key] = $this->normalizeDateTime($item);
+
                 continue;
             }
 
@@ -241,7 +251,7 @@ final class ShlinkClient
             $error = curl_error($curl) ?: 'Unknown cURL error.';
             curl_close($curl);
 
-            throw new ShlinkTransportException('Shlink request failed: ' . $error);
+            throw new ShlinkTransportException('Shlink request failed: '.$error);
         }
 
         $statusCode = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
@@ -302,7 +312,8 @@ final class ShlinkClient
             $value = trim($parts[1]);
 
             if (array_key_exists($name, $headers)) {
-                $headers[$name] .= ', ' . $value;
+                $headers[$name] .= ', '.$value;
+
                 continue;
             }
 
@@ -341,7 +352,7 @@ final class ShlinkClient
                 continue;
             }
 
-            $formatted[] = $name . ': ' . $value;
+            $formatted[] = $name.': '.$value;
         }
 
         return $formatted;
@@ -358,7 +369,7 @@ final class ShlinkClient
         $contentType = strtolower($responseHeaders['content-type'] ?? '');
         $looksJson = str_contains($contentType, 'json') || str_starts_with($responseBody, '{') || str_starts_with($responseBody, '[');
 
-        if (!$looksJson) {
+        if (! $looksJson) {
             return null;
         }
 
@@ -401,14 +412,14 @@ final class ShlinkClient
 
     private function buildStatusMessage(int $statusCode, string $title, string $detail, string $responseBody): string
     {
-        $prefix = 'HTTP ' . $statusCode . ' ' . $this->statusText($statusCode);
+        $prefix = 'HTTP '.$statusCode.' '.$this->statusText($statusCode);
         $message = $detail !== '' ? $detail : ($title !== '' ? $title : trim($responseBody));
 
         if ($message === '') {
             return $prefix;
         }
 
-        return $prefix . ': ' . $message;
+        return $prefix.': '.$message;
     }
 
     private function statusText(int $statusCode): string

@@ -30,7 +30,7 @@ class AttachRequestContext
             'user_id' => optional($request->user())->id,
             'ip' => $request->ip(),
             'method' => $request->getMethod(),
-            'path' => '/' . ltrim($request->path(), '/'),
+            'path' => '/'.ltrim($request->path(), '/'),
         ]);
 
         /** @var Response $response */

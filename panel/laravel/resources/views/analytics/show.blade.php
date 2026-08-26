@@ -37,6 +37,7 @@
                 @if ($link->shlink_short_url)
                     <a class="button primary" href="{{ $link->shlink_short_url }}" target="_blank" rel="noopener">Abrir link</a>
                 @endif
+                <a class="button secondary" href="{{ route('analytics.export', ['shortCode' => $shortCode] + request()->only(['startDate', 'endDate'])) }}">Exportar CSV</a>
             </div>
         </section>
 

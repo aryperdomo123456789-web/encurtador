@@ -48,6 +48,32 @@ final class LinkController extends Controller
         ]);
     }
 
+    public function update(Request $request, ShortLink $link, ShlinkClient $client): RedirectResponse
+    {
+        abort_unless($this->canEditLink($request, $link), 404);
+
+        $data = $request->validate([
+            'long_url' => ['required', 'url', 'max:2048'],
+        ]);
+
+        try {
+            $response = $client->updateShortUrl((string) $link->shlink_short_code, [
+                'longUrl' => (string) $data['long_url'],
+            ]);
+            $link->update([
+                'long_url' => $data['long_url'],
+                'updated_by_user_id' => $request->user()->id,
+                'shlink_response' => array_merge((array) $link->shlink_response, ['last_update' => $response]),
+            ]);
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->withErrors(['long_url' => 'Não foi possível atualizar o destino agora.']);
+        }
+
+        return redirect()->route('links.index')->with('status', 'Destino do link atualizado.');
+    }
+
     public function destroy(Request $request, ShortLink $link, ShlinkClient $client): RedirectResponse
     {
         abort_unless((int) $link->user_id === (int) $request->user()->id, 404);
@@ -74,6 +100,7 @@ final class LinkController extends Controller
         $nextMonthStart = (clone $monthStart)->addMonth();
         $createdThisMonth = ShortLink::query()
             ->where('user_id', $user->id)
+            ->where('is_free_link', true)
             ->whereBetween('created_at', [$monthStart, $nextMonthStart])
             ->count();
 
@@ -99,7 +126,10 @@ final class LinkController extends Controller
             $response = $provisioner->createFreeLink(
                 userId: (int) $request->user()->id,
                 longUrl: (string) $data['long_url'],
-                options: ['findIfExists' => true],
+                options: [
+                    'findIfExists' => true,
+                    'workspaceId' => $this->workspaceId($request),
+                ],
             );
         } catch (DomainException $e) {
             return redirect()
@@ -179,6 +209,7 @@ final class LinkController extends Controller
         ]);
 
         $options = [
+            'workspaceId' => $this->workspaceId($request),
             'title' => $this->nullableString($data['title'] ?? null),
             'tags' => $this->normalizeTags($data['tags'] ?? null),
             'domain' => $this->nullableString($data['domain'] ?? null),
@@ -287,6 +318,31 @@ final class LinkController extends Controller
             ->take(10)
             ->values()
             ->all();
+    }
+
+    private function canEditLink(Request $request, ShortLink $link): bool
+    {
+        if ((int) $link->user_id === (int) $request->user()->id) {
+            return true;
+        }
+        if ($link->workspace_id === null) {
+            return false;
+        }
+
+        $role = $request->user()->workspaces()->whereKey($link->workspace_id)->first()?->pivot?->role;
+
+        return in_array((string) $role, ['owner', 'admin', 'member'], true);
+    }
+
+    private function workspaceId(Request $request): ?int
+    {
+        $selected = (int) $request->session()->get('workspace_id', 0);
+        $query = $request->user()->workspaces();
+        $workspaceId = $selected > 0
+            ? $query->whereKey($selected)->value('workspaces.id')
+            : $query->orderBy('workspaces.id')->value('workspaces.id');
+
+        return $workspaceId === null ? null : (int) $workspaceId;
     }
 
     private function nullableString(mixed $value): ?string

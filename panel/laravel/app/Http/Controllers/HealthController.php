@@ -71,21 +71,22 @@ class HealthController extends Controller
             $checks['database'] = ['status' => 'ok'];
         } catch (Throwable $e) {
             $ok = false;
-            $checks['database'] = ['status' => 'fail', 'error' => $e->getMessage()];
-            Log::warning('panel.health.database_fail', ['error' => $e->getMessage()]);
+            $checks['database'] = ['status' => 'fail'];
+            Log::warning('panel.health.database_fail', ['exception' => $e::class, 'error' => $e->getMessage()]);
         }
 
         // Motor Shlink (endpoint publico /rest/health nao exige X-Api-Key).
         $base = rtrim((string) config('shlink.base_url', env('SHLINK_BASE_URL', '')), '/');
         if ($base === '') {
             $ok = false;
-            $checks['shlink'] = ['status' => 'skip', 'error' => 'SHLINK_BASE_URL nao configurado'];
+            $checks['shlink'] = ['status' => 'fail'];
+            Log::error('panel.health.shlink_not_configured');
         } else {
             try {
                 $started = microtime(true);
                 $response = Http::timeout(5)
                     ->acceptJson()
-                    ->get($base . '/rest/health');
+                    ->get($base.'/rest/health');
                 $latency = (int) ((microtime(true) - $started) * 1000);
                 $healthy = $response->successful()
                     && strtolower((string) $response->json('status')) === 'pass';
@@ -103,8 +104,8 @@ class HealthController extends Controller
                 }
             } catch (Throwable $e) {
                 $ok = false;
-                $checks['shlink'] = ['status' => 'fail', 'error' => $e->getMessage()];
-                Log::warning('panel.health.shlink_fail', ['error' => $e->getMessage()]);
+                $checks['shlink'] = ['status' => 'fail'];
+                Log::warning('panel.health.shlink_fail', ['exception' => $e::class, 'error' => $e->getMessage()]);
             }
         }
 

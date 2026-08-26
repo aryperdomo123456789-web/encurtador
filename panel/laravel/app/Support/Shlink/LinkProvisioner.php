@@ -38,7 +38,8 @@ final class LinkProvisioner
      *     maxVisits?: int|null,
      *     findIfExists?: bool|null,
      *     pathPrefix?: string|null,
-     *     shortCodeLength?: int|null
+     *     shortCodeLength?: int|null,
+     *     workspaceId?: int|null
      * } $options
      * @return array<string,mixed>
      */
@@ -47,6 +48,7 @@ final class LinkProvisioner
         $premium = (bool) ($options['premium'] ?? false);
         $customSlug = $this->normalizeNullableString($options['customSlug'] ?? null);
         $domain = $this->normalizeDomain($options['domain'] ?? null);
+        $workspaceId = isset($options['workspaceId']) ? (int) $options['workspaceId'] : null;
 
         if (! $premium && $domain !== null) {
             throw new InvalidArgumentException('Free links must use the default domain.');
@@ -100,6 +102,8 @@ final class LinkProvisioner
             $payload['shortCodeLength'] = (int) $options['shortCodeLength'];
         }
 
+        $reservationId = null;
+
         if ($premium) {
             if ($customSlug === null) {
                 throw new InvalidArgumentException('Premium links require customSlug in this integration layer.');
@@ -115,52 +119,74 @@ final class LinkProvisioner
                 throw new InvalidArgumentException('Free links must not define customSlug.');
             }
 
-            $this->assertMonthlyFreeQuotaAvailable($userId);
+            $reservationId = $this->quotaRepository->reserveFreeLinkCreation(
+                $userId,
+                $this->freeMonthlyLimit
+            );
             $payload['validUntil'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->add(new DateInterval('P7D'))->format(DATE_ATOM);
         }
 
-        $response = $this->client->createShortUrl($payload);
+        try {
+            $response = $this->client->createShortUrl($payload);
 
-        if (! $premium) {
-            $this->quotaRepository->recordFreeLinkCreation($userId, [
-                'shortCode' => $response['shortCode'] ?? null,
-                'shortUrl' => $response['shortUrl'] ?? null,
-                'longUrl' => $longUrl,
-                'domain' => $domain,
-                'createdAt' => $response['dateCreated'] ?? (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM),
-            ]);
-        } else {
-            $premiumPlanId = Plan::query()->where('code', 'premium')->value('id');
-            if ($premiumPlanId === null) {
-                throw new DomainException('Premium plan is not configured.');
+            if (! $premium) {
+                $this->quotaRepository->recordFreeLinkCreation($userId, [
+                    'reservationId' => $reservationId,
+                    'workspaceId' => $workspaceId,
+                    'shortCode' => $response['shortCode'] ?? null,
+                    'shortUrl' => $response['shortUrl'] ?? null,
+                    'longUrl' => $longUrl,
+                    'domain' => $domain,
+                    'validUntil' => $payload['validUntil'] ?? null,
+                    'createdAt' => $response['dateCreated'] ?? (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM),
+                    'payload' => $payload,
+                    'response' => $response,
+                ]);
+            } else {
+                $premiumPlanId = Plan::query()->where('code', 'premium')->value('id');
+                if ($premiumPlanId === null) {
+                    throw new DomainException('Premium plan is not configured.');
+                }
+
+                $customerDomainId = $domain === null
+                    ? null
+                    : CustomerDomain::query()
+                        ->where('user_id', $userId)
+                        ->when($workspaceId !== null, fn ($query) => $query->where('workspace_id', $workspaceId))
+                        ->where('domain', $domain)
+                        ->where('status', 'active')
+                        ->value('id');
+
+                ShortLink::query()->create([
+                    'customer_domain_id' => $customerDomainId,
+                    'workspace_id' => $workspaceId,
+                    'user_id' => $userId,
+                    'plan_id' => $premiumPlanId,
+                    'shlink_short_url' => $response['shortUrl'] ?? null,
+                    'shlink_short_code' => $response['shortCode'] ?? $customSlug,
+                    'domain' => $domain ?? config('shlink.default_domain'),
+                    'long_url' => $longUrl,
+                    'custom_slug' => $customSlug,
+                    'generated_slug' => $response['shortCode'] ?? $customSlug,
+                    'is_custom_slug' => true,
+                    'is_free_link' => false,
+                    'valid_until' => $options['validUntil'] ?? null,
+                    'status' => 'active',
+                    'created_via' => 'panel',
+                    'shlink_payload' => $payload,
+                    'shlink_response' => $response,
+                ]);
+            }
+        } catch (\Throwable $exception) {
+            if (! $premium && $reservationId !== null) {
+                try {
+                    $this->quotaRepository->releaseFreeLinkCreation($userId, $reservationId);
+                } catch (\Throwable $releaseException) {
+                    report($releaseException);
+                }
             }
 
-            $customerDomainId = $domain === null
-                ? null
-                : CustomerDomain::query()
-                    ->where('user_id', $userId)
-                    ->where('domain', $domain)
-                    ->where('status', 'active')
-                    ->value('id');
-
-            ShortLink::query()->create([
-                'customer_domain_id' => $customerDomainId,
-                'user_id' => $userId,
-                'plan_id' => $premiumPlanId,
-                'shlink_short_url' => $response['shortUrl'] ?? null,
-                'shlink_short_code' => $response['shortCode'] ?? $customSlug,
-                'domain' => $domain ?? config('shlink.default_domain'),
-                'long_url' => $longUrl,
-                'custom_slug' => $customSlug,
-                'generated_slug' => $response['shortCode'] ?? $customSlug,
-                'is_custom_slug' => true,
-                'is_free_link' => false,
-                'valid_until' => $options['validUntil'] ?? null,
-                'status' => 'active',
-                'created_via' => 'panel',
-                'shlink_payload' => $payload,
-                'shlink_response' => $response,
-            ]);
+            throw $exception;
         }
 
         return $response;

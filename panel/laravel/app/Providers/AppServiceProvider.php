@@ -64,6 +64,30 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute($perMinute)->by($key);
         });
 
+        RateLimiter::for('auth-login', static function (Request $request): Limit {
+            $perMinute = max(1, (int) config('panel.login_rate_limit', 10));
+
+            return Limit::perMinute($perMinute)->by('login|'.($request->ip() ?: 'unknown'));
+        });
+
+        RateLimiter::for('auth-register', static function (Request $request): Limit {
+            $perMinute = max(1, (int) config('panel.register_rate_limit', 5));
+
+            return Limit::perMinute($perMinute)->by('register|'.($request->ip() ?: 'unknown'));
+        });
+
+        RateLimiter::for('health', static function (Request $request): Limit {
+            $perMinute = max(1, (int) config('panel.health_rate_limit', 60));
+
+            return Limit::perMinute($perMinute)->by('health|'.($request->ip() ?: 'unknown'));
+        });
+
+        RateLimiter::for('api', static function (Request $request): Limit {
+            $perMinute = max(1, (int) config('panel.api_rate_limit', 120));
+
+            return Limit::perMinute($perMinute)->by('api|'.($request->ip() ?: 'unknown'));
+        });
+
         View::composer('*', function ($view): void {
             $view->with('branding', BrandingSetting::current());
         });
