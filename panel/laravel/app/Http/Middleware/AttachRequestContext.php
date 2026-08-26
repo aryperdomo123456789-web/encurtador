@@ -27,7 +27,7 @@ class AttachRequestContext
 
         Log::withContext([
             'request_id' => $requestId,
-            'user_id' => optional($request->user())->id,
+            'user_id' => $request->hasSession() ? optional($request->user())->id : null,
             'ip' => $request->ip(),
             'method' => $request->getMethod(),
             'path' => '/'.ltrim($request->path(), '/'),
