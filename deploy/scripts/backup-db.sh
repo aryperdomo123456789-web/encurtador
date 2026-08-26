@@ -17,7 +17,7 @@ trap cleanup EXIT INT TERM
 mkdir -p "$BACKUP_DIR"
 
 docker compose -f "$COMPOSE_FILE" exec -T db sh -lc \
-    'exec mariadb-dump --single-transaction --routines --triggers --events "$MARIADB_DATABASE"' \
+    'exec mariadb-dump -u root -p"$MARIADB_ROOT_PASSWORD" --single-transaction --routines --triggers --events "$MARIADB_DATABASE"' \
     | gzip -c > "$TMP_OUTPUT"
 
 mv "$TMP_OUTPUT" "$OUTPUT"
