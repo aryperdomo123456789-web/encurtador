@@ -93,7 +93,8 @@ final class LoginTest extends TestCase
         config()->set('panel.host', 'me.example.test');
         config()->set('panel.admin_host', 'admin.me.example.test');
 
-        $this->get('http://admin.me.example.test/login')
+        $this->withServerVariables(['HTTP_HOST' => 'admin.me.example.test'])
+            ->get('http://admin.me.example.test/login')
             ->assertOk()
             ->assertSee('Acesso do proprietário', false)
             ->assertDontSee('Crie sua conta', false);
@@ -102,7 +103,8 @@ final class LoginTest extends TestCase
             'password' => bcrypt('secret-password'),
         ]);
 
-        $this->from('http://admin.me.example.test/login')
+        $this->withServerVariables(['HTTP_HOST' => 'admin.me.example.test'])
+            ->from('http://admin.me.example.test/login')
             ->post('http://admin.me.example.test/login', [
                 'email' => $user->email,
                 'password' => 'secret-password',
@@ -118,6 +120,8 @@ final class LoginTest extends TestCase
         config()->set('panel.host', 'me.example.test');
         config()->set('panel.admin_host', 'admin.me.example.test');
 
-        $this->get('http://api.example.test/login')->assertNotFound();
+        $this->withServerVariables(['HTTP_HOST' => 'api.example.test'])
+            ->get('http://api.example.test/login')
+            ->assertNotFound();
     }
 }

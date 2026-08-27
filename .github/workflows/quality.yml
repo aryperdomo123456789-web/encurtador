@@ -63,6 +63,7 @@ jobs:
           sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env.testing
           sed -i 's/^# DB_DATABASE=.*/DB_DATABASE=:memory:/' .env.testing
           sed -i 's/^PANEL_REQUIRE_EMAIL_VERIFICATION=.*/PANEL_REQUIRE_EMAIL_VERIFICATION=false/' .env.testing
+          printf '\nPANEL_HOST=\nPANEL_ADMIN_HOST=\n' >> .env.testing
           mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache
 
       - name: Compile views and routes

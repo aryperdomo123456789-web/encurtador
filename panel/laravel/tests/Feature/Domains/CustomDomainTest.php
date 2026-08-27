@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Support\Domains\DomainDnsResolver;
 use App\Support\Shlink\ShlinkClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 final class CustomDomainTest extends TestCase
@@ -28,6 +29,7 @@ final class CustomDomainTest extends TestCase
         config()->set('panel.custom_domain_dns_target', 'me.vr766.com');
         config()->set('panel.host', 'panel.test');
         config()->set('shlink.default_domain', 'me.vr766.com');
+        URL::forceRootUrl('http://panel.test');
 
         $this->app->instance(DomainDnsResolver::class, new FakeDomainResolver);
         $this->app->instance(ShlinkClient::class, $this->fakeShlinkClient());
