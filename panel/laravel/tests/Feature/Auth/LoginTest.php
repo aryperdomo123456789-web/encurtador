@@ -33,13 +33,29 @@ final class LoginTest extends TestCase
         ]);
 
         $response = $this->post(route('login.attempt'), [
-            'email'    => $user->email,
+            'email' => $user->email,
             'password' => 'secret-password',
         ]);
 
         $response->assertRedirect(route('dashboard'));
         $this->assertTrue(Auth::check());
         $this->assertSame($user->id, Auth::id());
+    }
+
+    public function test_login_with_unverified_user_redirects_to_verification_when_enabled(): void
+    {
+        config()->set('panel.require_email_verification', true);
+        $user = User::factory()->unverified()->create([
+            'password' => bcrypt('secret-password'),
+        ]);
+
+        $response = $this->post(route('login.attempt'), [
+            'email' => $user->email,
+            'password' => 'secret-password',
+        ]);
+
+        $response->assertRedirect(route('verification.notice'));
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_login_with_invalid_credentials_returns_back_with_error(): void
@@ -51,7 +67,7 @@ final class LoginTest extends TestCase
         $response = $this
             ->from(route('login'))
             ->post(route('login.attempt'), [
-                'email'    => $user->email,
+                'email' => $user->email,
                 'password' => 'wrong-password',
             ]);
 

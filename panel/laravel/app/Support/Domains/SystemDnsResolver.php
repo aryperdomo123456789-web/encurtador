@@ -13,17 +13,22 @@ final class SystemDnsResolver implements DomainDnsResolver
         $cname = @dns_get_record($domain, DNS_CNAME);
         if (is_array($cname)) {
             foreach ($cname as $record) {
-                if (!empty($record['target'])) {
+                if (! empty($record['target'])) {
                     $targets[] = $this->normalize((string) $record['target']);
                 }
             }
         }
 
-        $a = @dns_get_record($domain, DNS_A);
-        if (is_array($a)) {
-            foreach ($a as $record) {
-                if (!empty($record['ip'])) {
-                    $targets[] = $this->normalize((string) $record['ip']);
+        foreach ([DNS_A, DNS_AAAA] as $recordType) {
+            $records = @dns_get_record($domain, $recordType);
+            if (! is_array($records)) {
+                continue;
+            }
+
+            foreach ($records as $record) {
+                $address = (string) ($record['ip'] ?? '');
+                if ($address !== '' && $this->isPublicAddress($address)) {
+                    $targets[] = $this->normalize($address);
                 }
             }
         }
@@ -34,5 +39,14 @@ final class SystemDnsResolver implements DomainDnsResolver
     private function normalize(string $value): string
     {
         return strtolower(rtrim(trim($value), '.'));
+    }
+
+    private function isPublicAddress(string $address): bool
+    {
+        return filter_var(
+            $address,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        ) !== false;
     }
 }

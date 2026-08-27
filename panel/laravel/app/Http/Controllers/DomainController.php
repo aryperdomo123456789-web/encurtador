@@ -20,20 +20,23 @@ final class DomainController extends Controller
     {
         abort_unless((bool) optional($request->user())->canUseCustomDomain(), 403);
 
+        $workspaceId = $this->workspaceId($request);
         $domains = CustomerDomain::query()
             ->where('user_id', $request->user()->id)
+            ->when($workspaceId !== null, fn ($query) => $query->where('workspace_id', $workspaceId))
             ->orderBy('created_at')
             ->get();
 
         return view('domains.index', [
-            'domains'    => $domains,
-            'dnsTarget'  => (string) config('panel.custom_domain_dns_target', ''),
+            'domains' => $domains,
+            'dnsTarget' => (string) config('panel.custom_domain_dns_target', ''),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         abort_unless((bool) optional($request->user())->canUseCustomDomain(), 403);
+        abort_unless($this->canManageWorkspace($request), 403);
 
         $data = $request->validate([
             'domain' => [
@@ -66,24 +69,27 @@ final class DomainController extends Controller
         $customerDomain = CustomerDomain::query()->updateOrCreate(
             ['domain' => $domain, 'user_id' => $request->user()->id],
             [
-                'status'     => 'pending_dns',
+                'workspace_id' => $this->workspaceId($request),
+                'status' => 'pending_dns',
                 'dns_target' => $target,
                 'is_primary' => false,
-                'tls_mode'   => 'auto',
+                'tls_mode' => 'auto',
                 'tls_status' => 'pending',
             ],
         );
 
         return redirect()
             ->route('domains.index')
-            ->with('status', 'Dominio registrado. Aponte o DNS para ' . $target . ' e clique em Verificar.')
+            ->with('status', 'Dominio registrado. Aponte o DNS para '.$target.' e clique em Verificar.')
             ->with('domain_id', $customerDomain->id);
     }
 
     public function verify(Request $request, DomainDnsResolver $resolver, DomainService $domainService, CustomerDomain $customerDomain): RedirectResponse
     {
         abort_unless((bool) optional($request->user())->canUseCustomDomain(), 403);
+        abort_unless($this->canManageWorkspace($request), 403);
         abort_unless($customerDomain->user_id === $request->user()->id, 403);
+        abort_unless($this->belongsToWorkspace($request, $customerDomain->workspace_id), 403);
 
         $target = strtolower(trim((string) ($customerDomain->dns_target
             ?: config('panel.custom_domain_dns_target', ''))));
@@ -93,17 +99,19 @@ final class DomainController extends Controller
         }
 
         $resolved = $resolver->resolveTargets($customerDomain->domain);
-        if (!in_array($target, $resolved, true)) {
+        if (! in_array($target, $resolved, true)) {
             $customerDomain->update(['status' => 'pending_dns']);
+
             return back()->withErrors([
-                'domain' => 'DNS ainda nao aponta para ' . $target . '. Registros encontrados: '
-                    . ($resolved === [] ? 'nenhum' : implode(', ', $resolved))
-                    . '. Ajuste o CNAME/A no seu provedor e tente novamente em alguns minutos.',
+                'domain' => 'DNS ainda nao aponta para '.$target.'. Registros encontrados: '
+                    .($resolved === [] ? 'nenhum' : implode(', ', $resolved))
+                    .'. Ajuste o CNAME/A no seu provedor e tente novamente em alguns minutos.',
             ]);
         }
 
         if ($customerDomain->status === 'active' && $customerDomain->dns_verified_at !== null) {
             $customerDomain->update(['dns_verified_at' => now()]);
+
             return redirect()
                 ->route('domains.index')
                 ->with('status', 'Dominio ja esta ativo. DNS confirmado novamente.');
@@ -112,18 +120,19 @@ final class DomainController extends Controller
         try {
             $payload = $domainService->ensureRegistered($customerDomain->domain);
         } catch (InvalidArgumentException $e) {
-            return back()->withErrors(['domain' => 'Dominio invalido: ' . $e->getMessage()]);
+            return back()->withErrors(['domain' => 'Dominio invalido: '.$e->getMessage()]);
         } catch (Throwable $e) {
             report($e);
+
             return back()->withErrors(['domain' => 'Falha ao registrar o dominio no Shlink. Tente novamente em alguns instantes.']);
         }
 
         $customerDomain->update([
-            'status'                        => 'active',
-            'dns_verified_at'               => now(),
-            'shlink_domain_registered_at'   => now(),
-            'shlink_domain_payload'         => $payload,
-            'tls_status'                    => 'pending',
+            'status' => 'active',
+            'dns_verified_at' => now(),
+            'shlink_domain_registered_at' => now(),
+            'shlink_domain_payload' => $payload,
+            'tls_status' => 'pending',
         ]);
 
         return redirect()
@@ -139,7 +148,9 @@ final class DomainController extends Controller
     public function tls(Request $request, TlsProbeService $probe, CustomerDomain $customerDomain): RedirectResponse
     {
         abort_unless((bool) optional($request->user())->canUseCustomDomain(), 403);
+        abort_unless($this->canManageWorkspace($request), 403);
         abort_unless($customerDomain->user_id === $request->user()->id, 403);
+        abort_unless($this->belongsToWorkspace($request, $customerDomain->workspace_id), 403);
 
         if ($customerDomain->status !== 'active') {
             return back()->withErrors(['domain' => 'Verifique o DNS antes de testar o certificado TLS.']);
@@ -148,18 +159,48 @@ final class DomainController extends Controller
         $result = $probe->probe($customerDomain->fresh());
 
         $message = match ($result) {
-            'active'  => 'HTTPS ativo em ' . $customerDomain->domain . '.',
+            'active' => 'HTTPS ativo em '.$customerDomain->domain.'.',
             'pending' => 'Certificado ainda sendo emitido. Aguarde alguns minutos e teste novamente.',
-            default   => 'Nao foi possivel alcancar https://' . $customerDomain->domain . '. Confira DNS e proxy reverso.',
+            default => 'Nao foi possivel alcancar https://'.$customerDomain->domain.'. Confira DNS e proxy reverso.',
         };
 
         return redirect()->route('domains.index')->with('status', $message);
     }
 
+    private function workspaceId(Request $request): ?int
+    {
+        $selected = (int) $request->session()->get('workspace_id', 0);
+        $query = $request->user()->workspaces();
+        $workspaceId = $selected > 0
+            ? $query->whereKey($selected)->value('workspaces.id')
+            : $query->orderBy('workspaces.id')->value('workspaces.id');
+
+        return $workspaceId === null ? null : (int) $workspaceId;
+    }
+
+    private function belongsToWorkspace(Request $request, mixed $workspaceId): bool
+    {
+        return $workspaceId === null || $this->workspaceId($request) === (int) $workspaceId;
+    }
+
+    private function canManageWorkspace(Request $request): bool
+    {
+        $workspaceId = $this->workspaceId($request);
+        if ($workspaceId === null) {
+            return true;
+        }
+
+        $role = $request->user()->workspaces()->whereKey($workspaceId)->first()?->pivot?->role;
+
+        return in_array((string) $role, ['owner', 'admin'], true);
+    }
+
     public function destroy(Request $request, CustomerDomain $customerDomain): RedirectResponse
     {
         abort_unless((bool) optional($request->user())->canUseCustomDomain(), 403);
+        abort_unless($this->canManageWorkspace($request), 403);
         abort_unless($customerDomain->user_id === $request->user()->id, 403);
+        abort_unless($this->belongsToWorkspace($request, $customerDomain->workspace_id), 403);
 
         $customerDomain->delete();
 

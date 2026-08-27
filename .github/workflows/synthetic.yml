@@ -1,0 +1,26 @@
+name: MElink public synthetic
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: melink-public-synthetic
+  cancel-in-progress: true
+
+jobs:
+  public-synthetic:
+    name: Public synthetic checks
+    runs-on: ubuntu-latest
+    env:
+      MELINK_BASE_URL: https://me.vr766.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Run public synthetic checks
+        run: bash deploy/scripts/public-synthetic-check.sh "$MELINK_BASE_URL"

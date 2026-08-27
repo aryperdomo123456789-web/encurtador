@@ -20,7 +20,7 @@ final class CreateFreeLinkTest extends TestCase
         parent::setUp();
 
         $this->app->instance(ShlinkClient::class, $this->fakeShlinkClient());
-        $this->app->instance(FreeLinkQuotaRepository::class, new InMemoryFreeLinkQuotaRepository());
+        $this->app->instance(FreeLinkQuotaRepository::class, new InMemoryFreeLinkQuotaRepository);
     }
 
     public function test_authenticated_user_creates_free_link_via_post(): void
@@ -47,10 +47,10 @@ final class CreateFreeLinkTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->post(route('links.store'), [
-            'long_url'    => 'https://example.com/artigo',
-            'premium'     => '1',
+            'long_url' => 'https://example.com/artigo',
+            'premium' => '1',
             'custom_slug' => 'meu-slug',
-            'domain'      => 'client.example.com',
+            'domain' => 'client.example.com',
             'valid_until' => '2099-01-01',
         ])->assertRedirect(route('links.index'));
 
@@ -78,7 +78,7 @@ final class CreateFreeLinkTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $quota = new InMemoryFreeLinkQuotaRepository();
+        $quota = new InMemoryFreeLinkQuotaRepository;
         $quota->forcedCount = 5;
         $this->app->instance(FreeLinkQuotaRepository::class, $quota);
 
@@ -108,12 +108,12 @@ final class CreateFreeLinkTest extends TestCase
                 FakeShlinkPayload::$last = $body === null ? [] : (array) json_decode($body, true);
 
                 return [
-                    'status'  => 200,
+                    'status' => 200,
                     'headers' => ['content-type' => 'application/json'],
-                    'body'    => json_encode([
-                        'shortCode'   => 'abc123',
-                        'shortUrl'    => 'https://sho.rt/abc123',
-                        'longUrl'     => FakeShlinkPayload::$last['longUrl'] ?? null,
+                    'body' => json_encode([
+                        'shortCode' => 'abc123',
+                        'shortUrl' => 'https://sho.rt/abc123',
+                        'longUrl' => FakeShlinkPayload::$last['longUrl'] ?? null,
                         'dateCreated' => '2026-07-22T00:00:00+00:00',
                     ]),
                 ];
@@ -139,6 +139,17 @@ final class InMemoryFreeLinkQuotaRepository implements FreeLinkQuotaRepository
     {
         return $this->forcedCount;
     }
+
+    public function reserveFreeLinkCreation(int $userId, int $monthlyLimit): string
+    {
+        if ($this->forcedCount >= $monthlyLimit) {
+            throw new \DomainException('Monthly free-link limit reached');
+        }
+
+        return 'test-reservation';
+    }
+
+    public function releaseFreeLinkCreation(int $userId, string $reservationId): void {}
 
     public function recordFreeLinkCreation(int $userId, array $record): void
     {

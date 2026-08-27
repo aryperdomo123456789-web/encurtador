@@ -61,7 +61,7 @@ final class RichPreviewAdminTest extends TestCase
         $this->assertSame('Oferta do dia', $richPreview->title);
         $this->assertSame('https://example.com/oferta', $richPreview->destination_url);
         $this->assertNotNull($richPreview->image_path);
-        $this->assertTrue(file_exists(storage_path('app/public/' . $richPreview->image_path)));
+        $this->assertTrue(file_exists(storage_path('app/public/'.$richPreview->image_path)));
 
         $this->actingAs($owner)
             ->get(route('admin.rich-previews.edit', $richPreview))

@@ -17,7 +17,7 @@ final class RefreshDomainTlsStatus extends Command
     public function handle(TlsProbeService $probe): int
     {
         $query = CustomerDomain::query()->where('status', 'active');
-        if (!$this->option('all')) {
+        if (! $this->option('all')) {
             $query->whereIn('tls_status', ['pending', 'error', null]);
         }
 
@@ -29,6 +29,7 @@ final class RefreshDomainTlsStatus extends Command
         }
 
         $this->info(sprintf('Processados: %d', $count));
+
         return self::SUCCESS;
     }
 }

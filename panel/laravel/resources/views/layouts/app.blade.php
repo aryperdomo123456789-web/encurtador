@@ -394,6 +394,75 @@
             display: grid;
             gap: 12px;
         }
+        .activation-card {
+            background: linear-gradient(135deg, rgba(36, 71, 245, 0.06), rgba(255, 255, 255, 0.92));
+            border-color: rgba(36, 71, 245, 0.16);
+        }
+        .activation-summary {
+            display: grid;
+            justify-items: end;
+            gap: 3px;
+            color: var(--muted);
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+        .activation-summary strong {
+            color: var(--ink);
+            font-size: 1.35rem;
+            letter-spacing: -0.04em;
+        }
+        .activation-progress {
+            height: 8px;
+            margin: 2px 0 18px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(36, 71, 245, 0.12);
+        }
+        .activation-progress span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--primary), #6d5dfc);
+            transition: width 300ms ease;
+        }
+        .activation-steps {
+            display: grid;
+            gap: 10px;
+        }
+        .activation-step {
+            display: grid;
+            grid-template-columns: 34px minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-top: 1px solid var(--border);
+        }
+        .activation-step:first-child { border-top: 0; }
+        .step-marker {
+            display: grid;
+            width: 30px;
+            height: 30px;
+            place-items: center;
+            border: 1px solid rgba(36, 71, 245, 0.2);
+            border-radius: 50%;
+            color: var(--primary-strong);
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+        .activation-step.is-done .step-marker {
+            border-color: rgba(15, 157, 88, 0.2);
+            background: rgba(15, 157, 88, 0.1);
+            color: var(--success);
+        }
+        .step-copy {
+            display: grid;
+            gap: 3px;
+            min-width: 0;
+        }
+        .step-copy strong { letter-spacing: -0.02em; }
+        .step-copy span,
+        .step-status { color: var(--muted); font-size: 0.88rem; }
+        .step-status { color: var(--success); font-weight: 800; }
         .notice,
         .alert {
             padding: 16px 18px;
@@ -578,11 +647,16 @@
             .table td {
                 padding: 12px 8px;
             }
+            .activation-step { grid-template-columns: 30px minmax(0, 1fr); }
+            .activation-step .button,
+            .activation-step .step-status { grid-column: 2; justify-self: start; }
         }
     </style>
 </head>
 <body>
 <div class="app-shell">
+    @hasSection('marketing_page')
+    @else
     <header class="topbar">
         <a class="brand" href="{{ route('dashboard') }}">
             <img class="brand-mark" src="{{ $branding->logoUrl() }}" alt="Logo do painel" loading="eager">
@@ -598,6 +672,9 @@
                 <a class="nav-link {{ request()->routeIs('links.*') ? 'active' : '' }}" href="{{ route('links.index') }}">Links</a>
                 <a class="nav-link {{ request()->routeIs('domains.*') ? 'active' : '' }}" href="{{ route('domains.index') }}">Domínios</a>
                 <a class="nav-link {{ request()->routeIs('billing.*') ? 'active' : '' }}" href="{{ route('billing.index') }}">Assinatura</a>
+                <a class="nav-link {{ request()->routeIs('workspaces.*') ? 'active' : '' }}" href="{{ route('workspaces.index') }}">Workspaces</a>
+                <a class="nav-link {{ request()->routeIs('api-tokens.*') ? 'active' : '' }}" href="{{ route('api-tokens.index') }}">API</a>
+                <a class="nav-link {{ request()->routeIs('privacy.*') ? 'active' : '' }}" href="{{ route('privacy.index') }}">Privacidade</a>
                 @if (auth()->user()?->isOwner())
                     <a class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">Admin</a>
                     <a class="nav-link {{ request()->routeIs('admin.branding.*') ? 'active' : '' }}" href="{{ route('admin.branding.edit') }}">Marca</a>
@@ -614,8 +691,9 @@
             @endauth
         </nav>
     </header>
+    @endif
 
-    <main class="page">
+    <main class="{{ trim($__env->yieldContent('marketing_page')) !== '' ? 'marketing-main' : 'page' }}">
         @if (session('status'))
             <div class="alert success" role="status">{{ session('status') }}</div>
         @endif

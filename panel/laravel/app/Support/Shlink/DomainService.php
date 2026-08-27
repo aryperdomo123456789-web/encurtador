@@ -9,9 +9,7 @@ final class DomainService
     /** @var array<int,array<string,mixed>>|null */
     private ?array $cachedDomains = null;
 
-    public function __construct(private readonly ShlinkClient $client)
-    {
-    }
+    public function __construct(private readonly ShlinkClient $client) {}
 
     public function listDomains(bool $refresh = false): array
     {

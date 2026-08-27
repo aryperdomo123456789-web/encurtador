@@ -14,6 +14,7 @@ final class CustomerDomain extends Model
 
     protected $fillable = [
         'user_id',
+        'workspace_id',
         'created_by_user_id',
         'updated_by_user_id',
         'domain',
@@ -38,5 +39,10 @@ final class CustomerDomain extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function workspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class);
     }
 }

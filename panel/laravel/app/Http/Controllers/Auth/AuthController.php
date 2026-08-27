@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
-use App\Models\User;
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
@@ -40,7 +42,7 @@ final class AuthController extends Controller
     public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
-            'email'    => ['required', 'string', 'email'],
+            'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ]);
 
@@ -53,6 +55,10 @@ final class AuthController extends Controller
         }
 
         $request->session()->regenerate();
+
+        if ((bool) config('panel.require_email_verification') && ! $request->user()->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
 
         return redirect()->intended(route('dashboard'));
     }
@@ -71,9 +77,25 @@ final class AuthController extends Controller
             'password' => $data['password'],
         ]);
 
+        $workspace = Workspace::query()->create([
+            'owner_user_id' => $user->id,
+            'name' => $user->name.' — MElink',
+            'slug' => 'workspace-'.$user->id.'-'.Str::lower(Str::random(6)),
+            'status' => 'active',
+        ]);
+        $workspace->members()->attach($user->id, ['role' => 'owner']);
+
         Auth::login($user);
 
         $request->session()->regenerate();
+        $request->session()->put('workspace_id', $workspace->id);
+
+        if ((bool) config('panel.require_email_verification')) {
+            $user->sendEmailVerificationNotification();
+
+            return redirect()->route('verification.notice')
+                ->with('status', 'Conta criada. Confirme seu e-mail para liberar o painel.');
+        }
 
         return redirect()->route('dashboard')->with('status', 'Conta criada com sucesso. Bem-vindo ao painel.');
     }

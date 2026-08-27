@@ -11,7 +11,16 @@ interface FreeLinkQuotaRepository
     public function countFreeLinksForPeriod(int $userId, DateTimeInterface $from, DateTimeInterface $to): int;
 
     /**
-     * @param array<string,mixed> $record
+     * Reserva um slot mensal antes de chamar o provedor remoto.
+     *
+     * @throws \DomainException quando o limite foi atingido.
+     */
+    public function reserveFreeLinkCreation(int $userId, int $monthlyLimit): string;
+
+    public function releaseFreeLinkCreation(int $userId, string $reservationId): void;
+
+    /**
+     * @param  array<string,mixed>  $record
      */
     public function recordFreeLinkCreation(int $userId, array $record): void;
 }

@@ -21,28 +21,28 @@ Arquivo de referência para uso local fora do Compose:
 APP_URL=https://me.vr766.com
 PANEL_HOST=me.vr766.com
 PANEL_CUSTOM_DOMAIN_DNS_TARGET=me.vr766.com
-APP_KEY=base64:qYaX8ZTPm7Pi3aCnoTRG+Zh1bu/W/atwnrxtHHszxpM=
+APP_KEY=<generate-with-php-artisan-key-generate>
 
-DB_NAME=melink_lab
-DB_USER=melink_lab_user
-DB_PASSWORD=8f2d6b4f3c8b4f1a9c0d5e7a1b2c3d4e
-DB_ROOT_PASSWORD=1c7d9f0a3b5e6d8c2f4a9b0e1d3c5f7a
+DB_NAME=<local-database-name>
+DB_USER=<local-database-user>
+DB_PASSWORD=<local-database-password>
+DB_ROOT_PASSWORD=<local-database-root-password>
 
 SHLINK_BASE_URL=http://shlink:8080
-SHLINK_API_KEY=lab_shlink_api_8d4f2e1b6c7a9d0f3e5b1c2a4d6f8e0
+SHLINK_API_KEY=<local-shlink-api-key>
 SHLINK_DEFAULT_DOMAIN=me.vr766.com
 
-INITIAL_API_KEY=lab_initial_api_2f7e6d5c4b3a291807f6e5d4c3b2a190
-GEOLITE_LICENSE_KEY=LAB-GEOLITE-2026-DEMO-9f8a7b6c5d4e3f2a
-TRUSTED_PROXIES=*
+INITIAL_API_KEY=<local-initial-api-key>
+GEOLITE_LICENSE_KEY=<local-geolite-license-key>
+TRUSTED_PROXIES=127.0.0.1,::1
 LOG_CHANNEL=stderr
 LOG_STACK=single
 LOG_STDERR_FORMATTER=Monolog\Formatter\JsonFormatter
 
-STRIPE_KEY=pk_test_me_link_lab_2026_0000000000000000
-STRIPE_SECRET=sk_test_me_link_lab_2026_1111111111111111
-STRIPE_WEBHOOK_SECRET=whsec_me_link_lab_2026_2222222222222222
-STRIPE_PREMIUM_PRICE_ID=price_me_link_lab_premium_30days
+STRIPE_KEY=<stripe-test-public-key>
+STRIPE_SECRET=<stripe-test-secret-key>
+STRIPE_WEBHOOK_SECRET=<stripe-test-webhook-secret>
+STRIPE_PREMIUM_PRICE_ID=<stripe-test-price-id>
 ```
 
 ### `panel/laravel/.env.example`
@@ -81,18 +81,9 @@ STRIPE_PREMIUM_PRICE_ID=
 
 Use esta lista como referência rápida quando for trocar tudo por valores reais:
 
-- `APP_KEY` = `base64:qYaX8ZTPm7Pi3aCnoTRG+Zh1bu/W/atwnrxtHHszxpM=`
-- `DB_NAME` = `melink_lab`
-- `DB_USER` = `melink_lab_user`
-- `DB_PASSWORD` = `8f2d6b4f3c8b4f1a9c0d5e7a1b2c3d4e`
-- `DB_ROOT_PASSWORD` = `1c7d9f0a3b5e6d8c2f4a9b0e1d3c5f7a`
-- `SHLINK_API_KEY` = `lab_initial_api_2f7e6d5c4b3a291807f6e5d4c3b2a190`
-- `INITIAL_API_KEY` = `lab_initial_api_2f7e6d5c4b3a291807f6e5d4c3b2a190`
-- `GEOLITE_LICENSE_KEY` = `LAB-GEOLITE-2026-DEMO-9f8a7b6c5d4e3f2a`
-- `STRIPE_KEY` = `pk_test_me_link_lab_2026_0000000000000000`
-- `STRIPE_SECRET` = `sk_test_me_link_lab_2026_1111111111111111`
-- `STRIPE_WEBHOOK_SECRET` = `whsec_me_link_lab_2026_2222222222222222`
-- `STRIPE_PREMIUM_PRICE_ID` = `price_me_link_lab_premium_30days`
+- `APP_KEY`, credenciais MariaDB e chaves Shlink: gerar somente no ambiente local seguro ou no secret manager.
+- `GEOLITE_LICENSE_KEY`: usar apenas se houver licença válida, armazenada fora do Git.
+- `STRIPE_KEY`, `STRIPE_SECRET`, `STRIPE_WEBHOOK_SECRET` e `STRIPE_PREMIUM_PRICE_ID`: copiar do ambiente de teste da Stripe sem registrar valores no repositório.
 
 ## O que já está consistente agora
 

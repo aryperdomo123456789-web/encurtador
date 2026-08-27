@@ -31,8 +31,8 @@ final class UserAdminController extends Controller
         $users = User::query()
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($nested) use ($search): void {
-                    $nested->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('email', 'like', '%' . $search . '%');
+                    $nested->where('name', 'like', '%'.$search.'%')
+                        ->orWhere('email', 'like', '%'.$search.'%');
                 });
             })
             ->withCount([
@@ -106,6 +106,6 @@ final class UserAdminController extends Controller
 
         return redirect()
             ->route('admin.users.show', $user)
-            ->with('status', 'Senha temporaria gerada: ' . $temporaryPassword);
+            ->with('status', 'Senha temporaria gerada: '.$temporaryPassword);
     }
 }

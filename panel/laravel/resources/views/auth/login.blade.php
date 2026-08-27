@@ -41,6 +41,8 @@
         <button type="submit">Entrar</button>
     </form>
 
+    <p class="help"><a href="{{ route('password.request') }}">Esqueci minha senha</a></p>
+
     <p class="help">
         Ainda sem acesso? <a href="{{ route('register') }}">Crie sua conta</a> ou fale com a equipe responsável por <code>{{ config('panel.host', 'me.vr766.com') }}</code>.
     </p>

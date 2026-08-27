@@ -64,8 +64,8 @@ final class BrandingAdminTest extends TestCase
         $this->assertNotNull($branding->favicon_path);
         $this->assertNotNull($branding->social_image_path);
 
-        $this->assertTrue(file_exists(storage_path('app/public/' . $branding->logo_path)));
-        $this->assertTrue(file_exists(storage_path('app/public/' . $branding->favicon_path)));
-        $this->assertTrue(file_exists(storage_path('app/public/' . $branding->social_image_path)));
+        $this->assertTrue(file_exists(storage_path('app/public/'.$branding->logo_path)));
+        $this->assertTrue(file_exists(storage_path('app/public/'.$branding->favicon_path)));
+        $this->assertTrue(file_exists(storage_path('app/public/'.$branding->social_image_path)));
     }
 }

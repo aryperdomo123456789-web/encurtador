@@ -9,10 +9,9 @@ use App\Models\Subscription;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
-use Stripe\Checkout\Session as CheckoutSession;
 use Stripe\BillingPortal\Session as PortalSession;
-use Stripe\Customer;
 use Stripe\StripeClient;
 use Throwable;
 
@@ -25,7 +24,7 @@ final class BillingController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $plans = Plan::query()->orderBy('id')->get();
+        $plans = Plan::query()->where('is_active', true)->orderBy('id')->get();
         $subscription = Subscription::query()
             ->where('user_id', $user->id)
             ->where('provider', 'stripe')
@@ -33,10 +32,10 @@ final class BillingController extends Controller
             ->first();
 
         return view('billing.plans', [
-            'plans'        => $plans,
+            'plans' => $plans,
             'subscription' => $subscription,
-            'isPremium'    => (bool) $user->isPremium(),
-            'isOwner'      => (bool) $user->isOwner(),
+            'isPremium' => (bool) $user->isPremium(),
+            'isOwner' => (bool) $user->isOwner(),
         ]);
     }
 
@@ -56,32 +55,53 @@ final class BillingController extends Controller
                 ->with('status', 'Conta do dono usa acesso interno e nao depende de Stripe.');
         }
 
+        if ($user->isPremium()) {
+            return redirect()
+                ->route('billing.index')
+                ->with('status', 'Sua conta já está em um plano Premium ativo.');
+        }
+
+        $idempotencyKey = (string) $request->header('Idempotency-Key', '');
+        if (! preg_match('/^[A-Za-z0-9._:-]{1,80}$/', $idempotencyKey)) {
+            $idempotencyKey = (string) Str::uuid();
+        }
+
         $stripe = new StripeClient($secret);
 
         try {
             if ($user->stripe_customer_id === null) {
                 $customer = $stripe->customers->create([
-                    'email'    => $user->email,
-                    'name'     => $user->name,
+                    'email' => $user->email,
+                    'name' => $user->name,
                     'metadata' => ['user_id' => (string) $user->id],
+                ], [
+                    'idempotency_key' => 'melink-customer-'.$user->id,
                 ]);
                 $user->forceFill(['stripe_customer_id' => $customer->id])->save();
             }
 
             $session = $stripe->checkout->sessions->create([
-                'mode'        => 'subscription',
-                'customer'    => $user->stripe_customer_id,
-                'line_items'  => [[
-                    'price'    => $priceId,
+                'mode' => 'subscription',
+                'customer' => $user->stripe_customer_id,
+                'line_items' => [[
+                    'price' => $priceId,
                     'quantity' => 1,
                 ]],
-                'success_url' => route('billing.success') . '?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url'  => route('billing.cancel'),
-                'metadata'    => ['user_id' => (string) $user->id],
+                'success_url' => route('billing.success').'?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => route('billing.cancel'),
+                'metadata' => ['user_id' => (string) $user->id],
+            ], [
+                'idempotency_key' => 'melink-checkout-'.$user->id.'-'.$idempotencyKey,
             ]);
         } catch (Throwable $e) {
             report($e);
-            return back()->withErrors(['billing' => 'Falha ao iniciar checkout: ' . $e->getMessage()]);
+            Log::warning('billing.checkout_failed', [
+                'request_id' => $request->attributes->get('request_id'),
+                'user_id' => $request->user()->id,
+                'exception' => $e::class,
+            ]);
+
+            return back()->withErrors(['billing' => 'Falha ao iniciar o checkout. Tente novamente em instantes.']);
         }
 
         return redirect()->away($session->url);
@@ -102,14 +122,27 @@ final class BillingController extends Controller
             ]);
         }
 
+        $secret = (string) config('services.stripe.secret');
+        if ($secret === '') {
+            return redirect()->route('billing.index')->withErrors([
+                'billing' => 'Portal de cobrança ainda não está configurado. Contate o suporte.',
+            ]);
+        }
+
         try {
             $portal = PortalSession::create([
-                'customer'    => $user->stripe_customer_id,
-                'return_url'  => route('billing.index'),
+                'customer' => $user->stripe_customer_id,
+                'return_url' => route('billing.index'),
             ], ['api_key' => (string) config('services.stripe.secret')]);
         } catch (Throwable $e) {
             report($e);
-            return back()->withErrors(['billing' => 'Falha ao abrir portal Stripe.']);
+            Log::warning('billing.portal_failed', [
+                'request_id' => $request->attributes->get('request_id'),
+                'user_id' => $request->user()->id,
+                'exception' => $e::class,
+            ]);
+
+            return back()->withErrors(['billing' => 'Falha ao abrir o portal de cobrança. Tente novamente em instantes.']);
         }
 
         return redirect()->away($portal->url);
@@ -119,28 +152,28 @@ final class BillingController extends Controller
     {
         // O webhook e quem atualiza plano/subscription. Aqui so damos feedback.
         return view('billing.plans', [
-            'plans'        => Plan::query()->orderBy('id')->get(),
+            'plans' => Plan::query()->orderBy('id')->get(),
             'subscription' => Subscription::query()
                 ->where('user_id', $request->user()->id)
                 ->where('provider', 'stripe')
                 ->latest('id')->first(),
-            'isPremium'    => (bool) $request->user()->fresh()->isPremium(),
-            'isOwner'      => (bool) $request->user()->fresh()->isOwner(),
-            'flash'        => 'Pagamento concluido. Se seu plano ainda nao apareceu como Premium, atualize em alguns segundos (aguardando webhook).',
+            'isPremium' => (bool) $request->user()->fresh()->isPremium(),
+            'isOwner' => (bool) $request->user()->fresh()->isOwner(),
+            'flash' => 'Pagamento concluido. Se seu plano ainda nao apareceu como Premium, atualize em alguns segundos (aguardando webhook).',
         ]);
     }
 
     public function cancel(Request $request): View
     {
         return view('billing.plans', [
-            'plans'        => Plan::query()->orderBy('id')->get(),
+            'plans' => Plan::query()->orderBy('id')->get(),
             'subscription' => Subscription::query()
                 ->where('user_id', $request->user()->id)
                 ->where('provider', 'stripe')
                 ->latest('id')->first(),
-            'isPremium'    => (bool) $request->user()->isPremium(),
-            'isOwner'      => (bool) $request->user()->isOwner(),
-            'flash'        => 'Checkout cancelado. Voce continua no plano atual.',
+            'isPremium' => (bool) $request->user()->isPremium(),
+            'isOwner' => (bool) $request->user()->isOwner(),
+            'flash' => 'Checkout cancelado. Voce continua no plano atual.',
         ]);
     }
 }

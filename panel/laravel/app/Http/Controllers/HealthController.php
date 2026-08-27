@@ -59,6 +59,15 @@ class HealthController extends Controller
         return response()->noContent();
     }
 
+    public function release(): JsonResponse
+    {
+        return response()->json([
+            'service' => 'panel',
+            'release' => $this->manifestValue('RELEASE_COMMIT', '/\\A[0-9a-f]{7,40}\\z/i'),
+            'built_at' => $this->manifestValue('RELEASE_BUILT_AT', '/\\A\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z\\z/'),
+        ]);
+    }
+
     public function ready(): JsonResponse
     {
         $checks = [];
@@ -71,21 +80,22 @@ class HealthController extends Controller
             $checks['database'] = ['status' => 'ok'];
         } catch (Throwable $e) {
             $ok = false;
-            $checks['database'] = ['status' => 'fail', 'error' => $e->getMessage()];
-            Log::warning('panel.health.database_fail', ['error' => $e->getMessage()]);
+            $checks['database'] = ['status' => 'fail'];
+            Log::warning('panel.health.database_fail', ['exception' => $e::class, 'error' => $e->getMessage()]);
         }
 
         // Motor Shlink (endpoint publico /rest/health nao exige X-Api-Key).
         $base = rtrim((string) config('shlink.base_url', env('SHLINK_BASE_URL', '')), '/');
         if ($base === '') {
             $ok = false;
-            $checks['shlink'] = ['status' => 'skip', 'error' => 'SHLINK_BASE_URL nao configurado'];
+            $checks['shlink'] = ['status' => 'fail'];
+            Log::error('panel.health.shlink_not_configured');
         } else {
             try {
                 $started = microtime(true);
                 $response = Http::timeout(5)
                     ->acceptJson()
-                    ->get($base . '/rest/health');
+                    ->get($base.'/rest/health');
                 $latency = (int) ((microtime(true) - $started) * 1000);
                 $healthy = $response->successful()
                     && strtolower((string) $response->json('status')) === 'pass';
@@ -103,8 +113,8 @@ class HealthController extends Controller
                 }
             } catch (Throwable $e) {
                 $ok = false;
-                $checks['shlink'] = ['status' => 'fail', 'error' => $e->getMessage()];
-                Log::warning('panel.health.shlink_fail', ['error' => $e->getMessage()]);
+                $checks['shlink'] = ['status' => 'fail'];
+                Log::warning('panel.health.shlink_fail', ['exception' => $e::class, 'error' => $e->getMessage()]);
             }
         }
 
@@ -114,5 +124,17 @@ class HealthController extends Controller
             'time' => now()->toIso8601String(),
             'checks' => $checks,
         ], $ok ? 200 : 503);
+    }
+
+    private function manifestValue(string $name, string $pattern): ?string
+    {
+        $path = base_path('../../deploy/'.$name);
+        if (! is_readable($path)) {
+            return null;
+        }
+
+        $value = trim((string) file_get_contents($path));
+
+        return preg_match($pattern, $value) === 1 ? $value : null;
     }
 }

@@ -6,19 +6,24 @@ COMPOSE_FILE="$ROOT_DIR/deploy/compose.prod.yml"
 BACKUP_DIR=${BACKUP_DIR:-/www/backups/shlink-panel}
 TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
 OUTPUT="$BACKUP_DIR/shlink-panel-$TIMESTAMP.sql.gz"
-TMP_OUTPUT=$(mktemp "${BACKUP_DIR}/.backup.XXXXXX")
+TMP_DUMP=$(mktemp "$BACKUP_DIR/.dump.XXXXXX")
+TMP_OUTPUT=$(mktemp "$BACKUP_DIR/.backup.XXXXXX")
 
 cleanup() {
-    rm -f "$TMP_OUTPUT"
+    rm -f "$TMP_DUMP" "$TMP_OUTPUT"
 }
 
 trap cleanup EXIT INT TERM
 
 mkdir -p "$BACKUP_DIR"
 
-docker compose -f "$COMPOSE_FILE" exec -T db sh -lc \
-    'exec mariadb-dump --single-transaction --routines --triggers --events "$MARIADB_DATABASE"' \
-    | gzip -c > "$TMP_OUTPUT"
+docker compose --env-file "$ROOT_DIR/deploy/.env" -f "$COMPOSE_FILE" exec -T db sh -lc \
+    'exec mariadb-dump --protocol=SOCKET --skip-ssl -u "$MARIADB_USER" -p"$MARIADB_PASSWORD" --single-transaction --skip-lock-tables "$MARIADB_DATABASE"' \
+    > "$TMP_DUMP"
+
+test -s "$TMP_DUMP"
+gzip -c "$TMP_DUMP" > "$TMP_OUTPUT"
+gzip -t "$TMP_OUTPUT"
 
 mv "$TMP_OUTPUT" "$OUTPUT"
 trap - EXIT INT TERM

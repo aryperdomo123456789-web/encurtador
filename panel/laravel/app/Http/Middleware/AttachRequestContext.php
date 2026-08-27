@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 /**
  * Anexa contexto estruturado a todos os logs da requisicao e propaga
@@ -19,23 +20,37 @@ class AttachRequestContext
     public function handle(Request $request, Closure $next): Response
     {
         $requestId = (string) $request->headers->get('X-Request-Id', '');
-        if ($requestId === '' || strlen($requestId) > 128) {
+        if (preg_match('/\\A[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}\\z/D', $requestId) !== 1) {
             $requestId = (string) Str::uuid();
         }
 
         $request->attributes->set('request_id', $requestId);
 
+        $userId = null;
+        try {
+            $userId = optional($request->user())->id;
+        } catch (Throwable) {
+            // Health e APIs sem sessão continuam operacionais.
+        }
+
         Log::withContext([
             'request_id' => $requestId,
-            'user_id' => optional($request->user())->id,
+            'user_id' => $userId,
             'ip' => $request->ip(),
             'method' => $request->getMethod(),
-            'path' => '/' . ltrim($request->path(), '/'),
+            'path' => '/'.ltrim($request->path(), '/'),
         ]);
+
+        $startedAt = microtime(true);
 
         /** @var Response $response */
         $response = $next($request);
         $response->headers->set('X-Request-Id', $requestId);
+
+        Log::withContext([
+            'status' => $response->getStatusCode(),
+            'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
+        ]);
 
         return $response;
     }
