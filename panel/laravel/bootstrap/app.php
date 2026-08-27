@@ -3,9 +3,9 @@
 use App\Http\Middleware\ApiIdempotency;
 use App\Http\Middleware\AttachRequestContext;
 use App\Http\Middleware\AuthenticateApiToken;
-use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\EnsureOwnerAdminHost;
 use App\Http\Middleware\EnsurePanelHost;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\UseCurrentPanelHost;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
