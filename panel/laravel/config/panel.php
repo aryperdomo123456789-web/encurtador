@@ -8,11 +8,12 @@ return [
     | Painel — Host
     |--------------------------------------------------------------------------
     |
-    | Hostname que responde pelas rotas do painel administrativo. Isola o
+    | Hosts que respondem pelas rotas do painel administrativo. Isola o
     | painel do host público de slugs (motor Shlink), evitando que caminhos
     | como /login, /links ou /domains colidam com short codes.
     |
-    | - Em produção, o padrão do projeto é `me.vr766.com`.
+    | - Em produção, `me.vr766.com` atende clientes e
+    |   `PANEL_ADMIN_HOST` atende exclusivamente o proprietário.
     | - Em desenvolvimento local, defina `PANEL_HOST=` (vazio) no `.env`
     |   para desativar o domain guard e servir o painel em qualquer host.
     |
@@ -22,6 +23,9 @@ return [
         'PANEL_HOST',
         env('APP_ENV', 'local') === 'testing' ? '' : 'me.vr766.com'
     ),
+
+    /* Host separado para o acesso exclusivo do proprietário. */
+    'admin_host' => env('PANEL_ADMIN_HOST', ''),
 
     /*
     |--------------------------------------------------------------------------

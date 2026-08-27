@@ -24,14 +24,20 @@ final class AuthController extends Controller
     public function showLogin(Request $request): View|RedirectResponse
     {
         if (Auth::check()) {
-            return redirect()->intended(route('dashboard'));
+            return redirect()->intended($this->isAdminHost($request) ? route('admin.dashboard') : route('dashboard'));
         }
 
-        return view('auth.login');
+        return view($this->isAdminHost($request) ? 'auth.admin-login' : 'auth.login');
     }
 
     public function showRegister(Request $request): View|RedirectResponse
     {
+        if ($this->isAdminHost($request)) {
+            return redirect()->route('login')->withErrors([
+                'email' => 'O cadastro de usuários acontece no painel público.',
+            ]);
+        }
+
         if (Auth::check()) {
             return redirect()->intended(route('dashboard'));
         }
@@ -56,15 +62,27 @@ final class AuthController extends Controller
 
         $request->session()->regenerate();
 
+        if ($this->isAdminHost($request) && ! $request->user()->isOwner()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()
+                ->withInput($request->only('email', 'remember'))
+                ->withErrors(['email' => 'Este acesso é exclusivo do proprietário.']);
+        }
+
         if ((bool) config('panel.require_email_verification') && ! $request->user()->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');
         }
 
-        return redirect()->intended(route('dashboard'));
+        return redirect()->intended($this->isAdminHost($request) ? route('admin.dashboard') : route('dashboard'));
     }
 
     public function register(Request $request): RedirectResponse
     {
+        abort_if($this->isAdminHost($request), 404);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
@@ -108,5 +126,12 @@ final class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
+    }
+
+    private function isAdminHost(Request $request): bool
+    {
+        $adminHost = (string) config('panel.admin_host', '');
+
+        return $adminHost !== '' && $request->getHost() === $adminHost;
     }
 }

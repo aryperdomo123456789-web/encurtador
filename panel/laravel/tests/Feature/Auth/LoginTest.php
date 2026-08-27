@@ -87,4 +87,37 @@ final class LoginTest extends TestCase
         $response->assertRedirect(route('login'));
         $this->assertGuest();
     }
+
+    public function test_admin_host_renders_owner_login_and_rejects_common_user(): void
+    {
+        config()->set('panel.host', 'me.example.test');
+        config()->set('panel.admin_host', 'admin.me.example.test');
+
+        $this->get('http://admin.me.example.test/login')
+            ->assertOk()
+            ->assertSee('Acesso do proprietário', false)
+            ->assertDontSee('Crie sua conta', false);
+
+        $user = User::factory()->create([
+            'password' => bcrypt('secret-password'),
+        ]);
+
+        $this->from('http://admin.me.example.test/login')
+            ->post('http://admin.me.example.test/login', [
+                'email' => $user->email,
+                'password' => 'secret-password',
+            ])
+            ->assertRedirect('http://admin.me.example.test/login')
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
+    public function test_panel_host_rejects_unknown_host(): void
+    {
+        config()->set('panel.host', 'me.example.test');
+        config()->set('panel.admin_host', 'admin.me.example.test');
+
+        $this->get('http://api.example.test/login')->assertNotFound();
+    }
 }

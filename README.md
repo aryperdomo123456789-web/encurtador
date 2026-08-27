@@ -8,6 +8,8 @@ Stack base para rodar o MElink como painel SaaS sobre o motor de redirecionament
 - `compose.yml` com o backend do motor exposto apenas em `127.0.0.1:8080`.
 - `DEFAULT_DOMAIN` apontando para `api-shlink.vr766.com`.
 - `INITIAL_API_KEY` para a primeira integração do painel.
+- O acesso separado do proprietário está documentado em
+  [`docs/admin-owner-access.md`](docs/admin-owner-access.md).
 - documentação de arquitetura e schema do painel em `docs/` e `sql/`.
 
 ## Arquivos adicionados

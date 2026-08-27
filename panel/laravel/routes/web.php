@@ -24,8 +24,6 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-$panelHost = (string) config('panel.host', '');
-
 // Endpoints de saude ficam fora do domain guard para permitir monitoramento
 // externo (uptime, orquestrador, balanceador) sem depender do PANEL_HOST.
 Route::get('/tls/allow', [HealthController::class, 'tlsAllow'])
@@ -82,7 +80,7 @@ $panelRoutes = static function (): void {
         $authenticatedMiddleware[] = 'verified';
     }
 
-    Route::middleware($authenticatedMiddleware)->group(function (): void {
+    Route::middleware(array_merge($authenticatedMiddleware, ['owner.admin-host']))->group(function (): void {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
         Route::prefix('/admin')->name('admin.')->group(function (): void {
@@ -158,8 +156,4 @@ $panelRoutes = static function (): void {
         ->name('public.redirect');
 };
 
-if ($panelHost !== '') {
-    Route::domain($panelHost)->group($panelRoutes);
-} else {
-    $panelRoutes();
-}
+Route::middleware(['panel.host', 'panel.current-host'])->group($panelRoutes);
