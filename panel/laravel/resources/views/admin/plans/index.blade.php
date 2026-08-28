@@ -48,10 +48,10 @@
                 <h2>Planos e limites</h2>
                 <p>Use a tabela para revisar preço, capacidade e estado de cobrança antes de convidar pilotos.</p>
             </div>
-            <span class="badge muted">{{ $plans->count() }} registros</span>
+            <span class="badge muted">{{ $plans->total() }} registros</span>
         </div>
 
-        <div style="overflow-x:auto;">
+        <div class="table-panel table-scroll" style="padding:0; border:0; box-shadow:none; background:transparent;">
             <table class="table">
                 <thead>
                     <tr>
@@ -115,10 +115,25 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8"><div class="empty">Nenhum plano cadastrado. Crie o primeiro plano para montar o catálogo.</div></td></tr>
+                        <tr><td colspan="8"><div class="empty-state"><div class="empty-icon" aria-hidden="true">＋</div><div><strong>Catálogo ainda vazio</strong><p>Crie o primeiro plano para definir posicionamento, capacidade e hipótese de preço.</p><a class="button primary" href="{{ route('admin.plans.create') }}">Criar primeiro plano</a></div></div></td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+        @if ($plans->hasPages())
+            <nav class="pagination" aria-label="Paginação do catálogo de planos">
+                @if ($plans->onFirstPage())
+                    <span class="pagination-link is-disabled">Anterior</span>
+                @else
+                    <a class="pagination-link" href="{{ $plans->previousPageUrl() }}">Anterior</a>
+                @endif
+                <span class="pagination-status">Página {{ $plans->currentPage() }} de {{ $plans->lastPage() }}</span>
+                @if ($plans->hasMorePages())
+                    <a class="pagination-link" href="{{ $plans->nextPageUrl() }}">Próxima</a>
+                @else
+                    <span class="pagination-link is-disabled">Próxima</span>
+                @endif
+            </nav>
+        @endif
     </section>
 @endsection

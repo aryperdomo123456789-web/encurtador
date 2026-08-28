@@ -198,7 +198,10 @@
 <body>
 <div class="auth-shell">
     <a href="{{ route('dashboard') }}" class="brand">
-        <img class="brand-mark" src="{{ $branding->logoUrl() }}" alt="Logo do painel" loading="eager">
+        <picture>
+            <source media="(prefers-color-scheme: dark)" srcset="{{ $branding->logoUrl('dark') }}">
+            <img class="brand-mark" src="{{ $branding->logoUrl('light') }}" alt="Logo do painel" loading="eager">
+        </picture>
         <div>
             <strong>MElink</strong>
             <span>{{ config('panel.host', 'me.vr766.com') }} · acesso administrativo</span>

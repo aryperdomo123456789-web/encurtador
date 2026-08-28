@@ -124,6 +124,74 @@
             flex-wrap: wrap;
             justify-content: flex-end;
         }
+        .menu-popover {
+            position: relative;
+        }
+        .menu-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+        }
+        .menu-trigger::-webkit-details-marker { display: none; }
+        .menu-trigger::after {
+            content: "⌄";
+            margin-top: -3px;
+            font-size: 0.9rem;
+            transition: transform 160ms ease;
+        }
+        .menu-popover[open] .menu-trigger::after { transform: rotate(180deg); }
+        .menu-popover[open] .menu-trigger {
+            color: var(--primary-strong);
+            background: var(--primary-soft);
+            border-color: rgba(36, 71, 245, 0.14);
+        }
+        .menu-panel {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            z-index: 20;
+            display: grid;
+            min-width: 260px;
+            gap: 4px;
+            padding: 10px;
+            border: 1px solid var(--border-strong);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.16);
+        }
+        .menu-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 8px 10px 10px;
+            border-bottom: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .menu-panel-head .badge {
+            padding: 5px 8px;
+            font-size: 0.68rem;
+        }
+        .menu-item {
+            display: grid;
+            gap: 2px;
+            padding: 10px;
+            border-radius: 12px;
+            color: var(--text);
+        }
+        .menu-item strong { font-size: 0.9rem; }
+        .menu-item span { color: var(--muted); font-size: 0.78rem; line-height: 1.35; }
+        .menu-item:hover,
+        .menu-item.active {
+            background: var(--primary-soft);
+            color: var(--primary-strong);
+        }
+        .menu-item.active span { color: var(--primary-strong); opacity: 0.78; }
         .nav-link,
         .nav-pill,
         .button,
@@ -307,6 +375,63 @@
             color: var(--muted);
             line-height: 1.6;
         }
+        .section-head-spaced { margin-top: 28px; }
+        .brand-summary-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-summary-icon {
+            display: grid;
+            flex: 0 0 38px;
+            width: 38px;
+            height: 38px;
+            place-items: center;
+            border-radius: 12px;
+            background: var(--primary-soft);
+            color: var(--primary-strong);
+            font-size: 0.78rem;
+            font-weight: 900;
+        }
+        .brand-summary-row strong,
+        .brand-summary-row span { display: block; }
+        .brand-slot-card { display: flex; flex-direction: column; }
+        .brand-slot-card .field { margin-top: auto; padding-top: 18px; }
+        .brand-preview {
+            display: grid;
+            min-height: 148px;
+            place-items: center;
+            padding: 24px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+        }
+        .brand-preview img {
+            display: block;
+            max-width: 100%;
+            object-fit: contain;
+        }
+        .brand-preview-light { background: #ffffff; }
+        .brand-preview-light img { max-width: 220px; max-height: 96px; }
+        .brand-preview-dark {
+            background: #0b1220;
+            border-color: rgba(148, 163, 184, 0.2);
+        }
+        .brand-preview-dark img { max-width: 220px; max-height: 96px; }
+        .brand-preview-icon { min-height: 148px; background: linear-gradient(135deg, #f8fafc, #e9efff); }
+        .brand-preview-icon img { width: 88px; height: 88px; border-radius: 22px; }
+        .brand-preview-social { min-height: 148px; background: linear-gradient(135deg, #eef2ff, #f8fafc); }
+        .brand-preview-social img { width: 100%; max-width: 340px; max-height: 136px; border-radius: 14px; }
+        .brand-reset { margin-top: 14px; }
+        .save-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 24px;
+            border-color: rgba(36, 71, 245, 0.2);
+            background: linear-gradient(135deg, rgba(36, 71, 245, 0.07), rgba(255, 255, 255, 0.88));
+        }
+        .save-panel h2 { margin: 12px 0 4px; letter-spacing: -0.04em; }
         .grid {
             display: grid;
             gap: 16px;
@@ -573,6 +698,52 @@
             border: 1px dashed rgba(102, 112, 133, 0.25);
             color: var(--muted);
         }
+        .empty-state {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 22px;
+            border: 1px dashed rgba(36, 71, 245, 0.22);
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, rgba(36, 71, 245, 0.05), rgba(255, 255, 255, 0.7));
+        }
+        .empty-state strong { display: block; letter-spacing: -0.02em; }
+        .empty-state p { margin: 5px 0 12px; color: var(--muted); line-height: 1.55; }
+        .empty-icon {
+            display: grid;
+            flex: 0 0 36px;
+            width: 36px;
+            height: 36px;
+            place-items: center;
+            border-radius: 12px;
+            background: rgba(15, 157, 88, 0.1);
+            color: var(--success);
+            font-weight: 900;
+        }
+        .table-scroll { overflow-x: auto; }
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .pagination-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 92px;
+            padding: 10px 14px;
+            border: 1px solid var(--border-strong);
+            border-radius: 999px;
+            background: var(--surface-strong);
+            color: var(--text);
+            font-size: 0.88rem;
+            font-weight: 800;
+        }
+        .pagination-link:hover { color: var(--primary-strong); border-color: rgba(36, 71, 245, 0.25); }
+        .pagination-link.is-disabled { color: #98a2b3; background: var(--surface-muted); cursor: not-allowed; }
+        .pagination-status { color: var(--muted); font-size: 0.88rem; font-weight: 700; }
         .kpi {
             display: flex;
             align-items: baseline;
@@ -614,6 +785,14 @@
             .nav {
                 justify-content: flex-start;
             }
+            .menu-panel {
+                left: 0;
+                right: auto;
+            }
+            .admin-menu .menu-panel {
+                left: auto;
+                right: 0;
+            }
         }
         @media (max-width: 640px) {
             .app-shell {
@@ -650,6 +829,10 @@
             .activation-step { grid-template-columns: 30px minmax(0, 1fr); }
             .activation-step .button,
             .activation-step .step-status { grid-column: 2; justify-self: start; }
+            .empty-state { align-items: flex-start; }
+            .save-panel { align-items: stretch; flex-direction: column; }
+            .pagination { align-items: stretch; flex-wrap: wrap; }
+            .pagination-status { order: -1; width: 100%; text-align: center; }
         }
     </style>
 </head>
@@ -659,7 +842,10 @@
     @else
     <header class="topbar">
         <a class="brand" href="{{ route('dashboard') }}">
-            <img class="brand-mark" src="{{ $branding->logoUrl() }}" alt="Logo do painel" loading="eager">
+            <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="{{ $branding->logoUrl('dark') }}">
+                <img class="brand-mark" src="{{ $branding->logoUrl('light') }}" alt="Logo do painel" loading="eager">
+            </picture>
             <div class="brand-title">
                 <strong>MElink</strong>
                 <span>{{ config('panel.host', 'me.vr766.com') }} · controle operacional</span>
@@ -671,17 +857,41 @@
                 <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
                 <a class="nav-link {{ request()->routeIs('links.*') ? 'active' : '' }}" href="{{ route('links.index') }}">Links</a>
                 <a class="nav-link {{ request()->routeIs('domains.*') ? 'active' : '' }}" href="{{ route('domains.index') }}">Domínios</a>
-                <a class="nav-link {{ request()->routeIs('billing.*') ? 'active' : '' }}" href="{{ route('billing.index') }}">Assinatura</a>
                 <a class="nav-link {{ request()->routeIs('workspaces.*') ? 'active' : '' }}" href="{{ route('workspaces.index') }}">Workspaces</a>
                 <a class="nav-link {{ request()->routeIs('api-tokens.*') ? 'active' : '' }}" href="{{ route('api-tokens.index') }}">API</a>
-                <a class="nav-link {{ request()->routeIs('privacy.*') ? 'active' : '' }}" href="{{ route('privacy.index') }}">Privacidade</a>
+                <a class="nav-link {{ request()->routeIs('billing.*') ? 'active' : '' }}" href="{{ route('billing.index') }}">Assinatura</a>
                 @if (auth()->user()?->isOwner())
-                    <a class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">Admin</a>
-                    <a class="nav-link {{ request()->routeIs('admin.plans.*') ? 'active' : '' }}" href="{{ route('admin.plans.index') }}">Planos</a>
-                    <a class="nav-link {{ request()->routeIs('admin.branding.*') ? 'active' : '' }}" href="{{ route('admin.branding.edit') }}">Marca</a>
-                    <a class="nav-link {{ request()->routeIs('admin.audit-logs.*') ? 'active' : '' }}" href="{{ route('admin.audit-logs.index') }}">Auditoria</a>
-                    <a class="nav-link {{ request()->routeIs('admin.rich-previews.*') ? 'active' : '' }}" href="{{ route('admin.rich-previews.index') }}">Rich Preview</a>
+                    <details class="menu-popover admin-menu">
+                        <summary class="nav-link menu-trigger {{ request()->routeIs('admin.*') ? 'active' : '' }}">Admin / Dono</summary>
+                        <div class="menu-panel" aria-label="Administração do proprietário">
+                            <div class="menu-panel-head"><span>Governança</span><span class="badge info">Owner</span></div>
+                            <a class="menu-item {{ request()->routeIs('admin.dashboard', 'admin.users.*') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
+                                <strong>Governança</strong><span>Usuários, acesso e operação do painel</span>
+                            </a>
+                            <a class="menu-item {{ request()->routeIs('admin.plans.*') ? 'active' : '' }}" href="{{ route('admin.plans.index') }}">
+                                <strong>Planos &amp; Catálogo</strong><span>Preços, limites e vínculo Stripe</span>
+                            </a>
+                            <a class="menu-item {{ request()->routeIs('admin.brand.*', 'admin.branding.*') ? 'active' : '' }}" href="{{ route('admin.brand.edit') }}">
+                                <strong>Marca &amp; Identidade</strong><span>Logo, favicon e imagem social</span>
+                            </a>
+                            <a class="menu-item {{ request()->routeIs('admin.audit-logs.*') ? 'active' : '' }}" href="{{ route('admin.audit-logs.index') }}">
+                                <strong>Auditoria</strong><span>Eventos, contexto e rastreabilidade</span>
+                            </a>
+                            <a class="menu-item {{ request()->routeIs('admin.rich-previews.*') ? 'active' : '' }}" href="{{ route('admin.rich-previews.index') }}">
+                                <strong>Rich Preview</strong><span>Cards de compartilhamento e campanhas</span>
+                            </a>
+                        </div>
+                    </details>
                 @endif
+                <details class="menu-popover account-menu">
+                    <summary class="nav-link menu-trigger {{ request()->routeIs('privacy.*') ? 'active' : '' }}">Conta</summary>
+                    <div class="menu-panel" aria-label="Configurações da conta">
+                        <div class="menu-panel-head"><span>Preferências</span></div>
+                        <a class="menu-item {{ request()->routeIs('privacy.*') ? 'active' : '' }}" href="{{ route('privacy.index') }}">
+                            <strong>Privacidade</strong><span>Exportação e controle dos seus dados</span>
+                        </a>
+                    </div>
+                </details>
                 <form method="POST" action="{{ route('logout') }}" style="display:inline;">
                     @csrf
                     <button type="submit" class="nav-pill">Sair</button>

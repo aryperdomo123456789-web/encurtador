@@ -43,9 +43,18 @@
         </form>
 
         @if ($logs->isEmpty())
-            <div class="mini-card">Nenhum evento de auditoria encontrado.</div>
+            <div class="empty-state">
+                <div class="empty-icon" aria-hidden="true">✓</div>
+                <div>
+                    <strong>Nenhum evento encontrado</strong>
+                    <p>Quando alguém criar, editar ou arquivar dados, a trilha de auditoria aparecerá aqui.</p>
+                    @if($action !== '' || $subject !== '')
+                        <a class="button ghost" href="{{ route('admin.audit-logs.index') }}">Remover filtros</a>
+                    @endif
+                </div>
+            </div>
         @else
-            <div class="table-panel" style="margin-top: 14px;">
+            <div class="table-panel table-scroll" style="margin-top: 14px;">
                 <table class="table">
                     <thead>
                         <tr>
@@ -85,6 +94,21 @@
                     </tbody>
                 </table>
             </div>
+            @if ($logs->hasPages())
+                <nav class="pagination" aria-label="Paginação da auditoria">
+                    @if ($logs->onFirstPage())
+                        <span class="pagination-link is-disabled">Anterior</span>
+                    @else
+                        <a class="pagination-link" href="{{ $logs->previousPageUrl() }}">Anterior</a>
+                    @endif
+                    <span class="pagination-status">Página {{ $logs->currentPage() }} de {{ $logs->lastPage() }}</span>
+                    @if ($logs->hasMorePages())
+                        <a class="pagination-link" href="{{ $logs->nextPageUrl() }}">Próxima</a>
+                    @else
+                        <span class="pagination-link is-disabled">Próxima</span>
+                    @endif
+                </nav>
+            @endif
         @endif
     </section>
 @endsection

@@ -89,6 +89,8 @@ $panelRoutes = static function (): void {
             Route::get('/users', [UserAdminController::class, 'index'])->name('users.index');
             Route::get('/users/{user}', [UserAdminController::class, 'show'])->name('users.show');
             Route::post('/users/{user}/reset-password', [UserAdminController::class, 'resetPassword'])->name('users.reset-password');
+            Route::get('/brand', [BrandingController::class, 'edit'])->name('brand.edit');
+            Route::post('/brand', [BrandingController::class, 'update'])->name('brand.update');
             Route::get('/branding', [BrandingController::class, 'edit'])->name('branding.edit');
             Route::post('/branding', [BrandingController::class, 'update'])->name('branding.update');
             Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');

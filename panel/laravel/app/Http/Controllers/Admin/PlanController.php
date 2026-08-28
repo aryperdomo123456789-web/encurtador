@@ -19,16 +19,18 @@ final class PlanController extends Controller
     {
         $this->requireOwner($request);
 
+        $allPlans = Plan::query()->get(['id', 'is_active', 'is_public', 'stripe_price_id']);
         $plans = Plan::query()
             ->withCount('subscriptions')
             ->orderBy('sort_order')
             ->orderBy('id')
-            ->get();
+            ->paginate(25)
+            ->withQueryString();
 
         return view('admin.plans.index', [
             'plans' => $plans,
             'summary' => [
-                'active' => $plans->where('is_active', true)->where('is_public', true)->count(),
+                'active' => $allPlans->where('is_active', true)->where('is_public', true)->count(),
                 'subscribers' => Subscription::query()
                     ->whereIn('status', ['active', 'trialing'])
                     ->distinct()
@@ -37,7 +39,7 @@ final class PlanController extends Controller
                     ->whereIn('subscriptions.status', ['active', 'trialing'])
                     ->join('plans', 'plans.id', '=', 'subscriptions.plan_id')
                     ->sum('plans.monthly_price_cents'),
-                'withStripePrice' => $plans->whereNotNull('stripe_price_id')->count(),
+                'withStripePrice' => $allPlans->whereNotNull('stripe_price_id')->count(),
             ],
         ]);
     }

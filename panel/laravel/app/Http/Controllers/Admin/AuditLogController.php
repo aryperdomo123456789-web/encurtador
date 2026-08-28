@@ -33,7 +33,7 @@ final class AuditLogController extends Controller
             $query->where('subject_type', 'like', '%'.$subject.'%');
         }
 
-        $logs = $query->latest('id')->limit(200)->get();
+        $logs = $query->latest('id')->paginate(25)->withQueryString();
 
         return view('admin.audit-logs.index', [
             'logs' => $logs,

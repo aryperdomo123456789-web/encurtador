@@ -35,21 +35,48 @@ final class BrandingController extends Controller
 
         $data = $request->validate([
             'logo_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
+            'logo_light_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
+            'logo_dark_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
             'favicon_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
             'social_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:5120'],
             'reset_logo' => ['nullable', 'boolean'],
+            'reset_logo_light' => ['nullable', 'boolean'],
+            'reset_logo_dark' => ['nullable', 'boolean'],
             'reset_favicon' => ['nullable', 'boolean'],
             'reset_social_image' => ['nullable', 'boolean'],
         ]);
 
         $branding = BrandingSetting::current();
+        $legacyLogoPath = $branding->logo_path;
 
-        $branding->logo_path = $this->resolveSlot(
-            currentPath: $branding->logo_path,
-            upload: $request->file('logo_image'),
-            reset: $request->boolean('reset_logo'),
-            slot: 'logo',
+        $lightUpload = $request->file('logo_light_image') ?: $request->file('logo_image');
+        $branding->logo_light_path = $this->resolveSlot(
+            currentPath: $branding->logo_light_path,
+            upload: $lightUpload,
+            reset: $request->boolean('reset_logo') || $request->boolean('reset_logo_light'),
+            slot: 'logo-light',
         );
+
+        if ($lightUpload instanceof UploadedFile && $legacyLogoPath !== null && $legacyLogoPath !== '') {
+            $this->deleteIfCustom($legacyLogoPath);
+            $branding->logo_path = null;
+        }
+
+        $branding->logo_dark_path = $this->resolveSlot(
+            currentPath: $branding->logo_dark_path,
+            upload: $request->file('logo_dark_image'),
+            reset: $request->boolean('reset_logo_dark'),
+            slot: 'logo-dark',
+        );
+
+        if ($request->boolean('reset_logo') && ! $request->hasFile('logo_image') && ! $request->hasFile('logo_light_image')) {
+            $branding->logo_path = $this->resolveSlot(
+                currentPath: $branding->logo_path,
+                upload: null,
+                reset: true,
+                slot: 'logo',
+            );
+        }
 
         $branding->favicon_path = $this->resolveSlot(
             currentPath: $branding->favicon_path,
@@ -68,7 +95,7 @@ final class BrandingController extends Controller
         $branding->save();
 
         return redirect()
-            ->route('admin.branding.edit')
+            ->route('admin.brand.edit')
             ->with('status', 'Marca atualizada com sucesso.');
     }
 

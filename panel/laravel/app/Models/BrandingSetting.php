@@ -20,6 +20,8 @@ class BrandingSetting extends Model
         'created_by_user_id',
         'updated_by_user_id',
         'logo_path',
+        'logo_light_path',
+        'logo_dark_path',
         'favicon_path',
         'social_image_path',
     ];
@@ -54,9 +56,13 @@ class BrandingSetting extends Model
         }
     }
 
-    public function logoUrl(): string
+    public function logoUrl(string $mode = 'light'): string
     {
-        return $this->resolveUrl($this->logo_path, 'branding/default-logo.png');
+        $path = $mode === 'dark'
+            ? ($this->logo_dark_path ?: $this->logo_light_path ?: $this->logo_path)
+            : ($this->logo_light_path ?: $this->logo_path ?: $this->logo_dark_path);
+
+        return $this->resolveUrl($path, 'branding/default-logo.png');
     }
 
     public function faviconUrl(): string
@@ -69,9 +75,13 @@ class BrandingSetting extends Model
         return $this->resolveUrl($this->social_image_path, 'branding/default-social.png');
     }
 
-    public function hasCustomLogo(): bool
+    public function hasCustomLogo(string $mode = 'light'): bool
     {
-        return $this->logo_path !== null && $this->logo_path !== '';
+        $path = $mode === 'dark'
+            ? ($this->logo_dark_path ?: $this->logo_light_path ?: $this->logo_path)
+            : ($this->logo_light_path ?: $this->logo_path ?: $this->logo_dark_path);
+
+        return $path !== null && $path !== '';
     }
 
     public function hasCustomFavicon(): bool

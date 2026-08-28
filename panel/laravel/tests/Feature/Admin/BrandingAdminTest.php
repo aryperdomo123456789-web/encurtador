@@ -29,7 +29,7 @@ final class BrandingAdminTest extends TestCase
         $this->actingAs($owner)
             ->get(route('admin.branding.edit'))
             ->assertOk()
-            ->assertSee('Marca do painel', false);
+            ->assertSee('Marca &amp; identidade', false);
     }
 
     public function test_common_user_is_forbidden_from_branding_page(): void
@@ -56,15 +56,15 @@ final class BrandingAdminTest extends TestCase
             'social_image' => UploadedFile::fake()->createWithContent('social.png', $pngBytes),
         ]);
 
-        $response->assertRedirect(route('admin.branding.edit'));
+        $response->assertRedirect(route('admin.brand.edit'));
 
         $branding = BrandingSetting::query()->firstOrFail();
 
-        $this->assertNotNull($branding->logo_path);
+        $this->assertNotNull($branding->logo_light_path);
         $this->assertNotNull($branding->favicon_path);
         $this->assertNotNull($branding->social_image_path);
 
-        $this->assertTrue(file_exists(storage_path('app/public/'.$branding->logo_path)));
+        $this->assertTrue(file_exists(storage_path('app/public/'.$branding->logo_light_path)));
         $this->assertTrue(file_exists(storage_path('app/public/'.$branding->favicon_path)));
         $this->assertTrue(file_exists(storage_path('app/public/'.$branding->social_image_path)));
     }
