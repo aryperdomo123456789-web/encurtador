@@ -677,6 +677,7 @@
                 <a class="nav-link {{ request()->routeIs('privacy.*') ? 'active' : '' }}" href="{{ route('privacy.index') }}">Privacidade</a>
                 @if (auth()->user()?->isOwner())
                     <a class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">Admin</a>
+                    <a class="nav-link {{ request()->routeIs('admin.plans.*') ? 'active' : '' }}" href="{{ route('admin.plans.index') }}">Planos</a>
                     <a class="nav-link {{ request()->routeIs('admin.branding.*') ? 'active' : '' }}" href="{{ route('admin.branding.edit') }}">Marca</a>
                     <a class="nav-link {{ request()->routeIs('admin.audit-logs.*') ? 'active' : '' }}" href="{{ route('admin.audit-logs.index') }}">Auditoria</a>
                     <a class="nav-link {{ request()->routeIs('admin.rich-previews.*') ? 'active' : '' }}" href="{{ route('admin.rich-previews.index') }}">Rich Preview</a>

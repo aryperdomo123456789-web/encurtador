@@ -154,7 +154,8 @@ final class StripeWebhookController extends Controller
             $user->forceFill(['stripe_customer_id' => $customerId])->save();
         }
 
-        $this->syncSubscription($user, 'active', $subscriptionId, $eventId, $eventCreatedAt);
+        $requestedPlanId = isset($session->metadata->plan_id) ? (int) $session->metadata->plan_id : null;
+        $this->syncSubscription($user, 'active', $subscriptionId, $eventId, $eventCreatedAt, null, $requestedPlanId ?: null);
     }
 
     private function onSubscriptionUpdated(object $subscription, string $eventId, ?int $eventCreatedAt): void
@@ -202,7 +203,8 @@ final class StripeWebhookController extends Controller
         string $subscriptionId,
         string $eventId,
         ?int $eventCreatedAt,
-        ?object $stripeSubscription = null
+        ?object $stripeSubscription = null,
+        ?int $requestedPlanId = null
     ): void {
         $current = Subscription::query()
             ->where('user_id', $user->id)
@@ -223,17 +225,24 @@ final class StripeWebhookController extends Controller
         }
 
         $premium = Plan::query()->where('code', 'premium')->first();
-        if ($premium === null) {
-            Log::error('billing.webhook.premium_plan_missing');
+        $freePlanId = Plan::query()->where('code', 'free')->value('id');
+        if ($premium === null || $freePlanId === null) {
+            Log::error('billing.webhook.base_plans_missing');
 
             return;
         }
 
         $isPaidState = in_array($status, ['active', 'trialing'], true);
         $isTerminalState = in_array($status, ['canceled', 'unpaid', 'incomplete_expired'], true);
-        $planId = $isTerminalState
-            ? Plan::query()->where('code', 'free')->value('id')
-            : $premium->id;
+        $plan = $isTerminalState
+            ? $freePlanId
+            : $this->resolvePaidPlan($stripeSubscription, $requestedPlanId, $premium);
+
+        if ($plan === null) {
+            return;
+        }
+
+        $planId = $plan;
 
         Subscription::query()->updateOrCreate(
             [
@@ -253,6 +262,59 @@ final class StripeWebhookController extends Controller
                 'cancel_at_period_end' => (bool) ($stripeSubscription?->cancel_at_period_end ?? false),
             ]
         );
+    }
+
+    private function resolvePaidPlan(?object $stripeSubscription, ?int $requestedPlanId, Plan $legacyPremium): ?int
+    {
+        $priceId = $this->stripePriceId($stripeSubscription);
+        if ($priceId !== null) {
+            $planId = Plan::query()
+                ->where('stripe_price_id', $priceId)
+                ->where('is_free', false)
+                ->where('is_active', true)
+                ->value('id');
+            if ($planId !== null) {
+                return (int) $planId;
+            }
+
+            Log::warning('billing.webhook.unknown_price', [
+                'price_id' => $priceId,
+            ]);
+
+            return null;
+        }
+
+        if ($requestedPlanId !== null) {
+            $plan = Plan::query()
+                ->whereKey($requestedPlanId)
+                ->where('is_free', false)
+                ->where('is_active', true)
+                ->first();
+
+            if ($plan !== null) {
+                return (int) $plan->id;
+            }
+        }
+
+        // Compatibilidade apenas para assinaturas legadas sem itens expandidos.
+        return $legacyPremium->id;
+    }
+
+    private function stripePriceId(?object $stripeSubscription): ?string
+    {
+        $items = $stripeSubscription?->items?->data ?? [];
+        $first = null;
+        if (is_array($items)) {
+            $first = $items[0] ?? null;
+        } elseif ($items instanceof \Traversable) {
+            $first = $items->current();
+        }
+
+        $priceId = is_object($first) ? ($first->price->id ?? null) : null;
+
+        return is_string($priceId) && preg_match('/^price_[A-Za-z0-9_]+$/', $priceId) === 1
+            ? $priceId
+            : null;
     }
 
     private function periodDate(mixed $timestamp): ?string

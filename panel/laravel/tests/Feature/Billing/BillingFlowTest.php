@@ -30,6 +30,8 @@ final class BillingFlowTest extends TestCase
             'allow_custom_expiration' => true,
             'allow_lifetime_links' => true,
             'is_active' => true,
+            'is_public' => true,
+            'stripe_price_id' => 'price_test_fake',
         ]);
         Subscription::query()->create([
             'user_id' => $user->id,
@@ -41,7 +43,7 @@ final class BillingFlowTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->post(route('billing.checkout'))
+            ->post(route('billing.checkout'), ['plan_id' => $plan->id])
             ->assertRedirect(route('billing.index'))
             ->assertSessionHas('status');
     }

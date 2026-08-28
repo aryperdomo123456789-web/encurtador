@@ -79,8 +79,20 @@
 
                 <ul class="list">
                     <li>
+                        <span class="label">Preço mensal</span>
+                        <span class="value">{{ $plan->is_free ? 'R$ 0,00' : 'R$ '.number_format($plan->monthly_price_cents / 100, 2, ',', '.') }}</span>
+                    </li>
+                    <li>
                         <span class="label">Limite mensal</span>
-                        <span class="value">{{ $plan->monthly_short_url_limit ? $plan->monthly_short_url_limit . ' links' : 'ilimitado' }}</span>
+                        <span class="value">{{ $plan->monthly_short_url_limit === null ? 'ilimitado' : number_format($plan->monthly_short_url_limit, 0, ',', '.') . ' links' }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Pool de cliques</span>
+                        <span class="value">{{ $plan->monthly_click_limit === null ? 'ilimitado' : number_format($plan->monthly_click_limit, 0, ',', '.') . ' cliques' }}</span>
+                    </li>
+                    <li>
+                        <span class="label">Domínios próprios</span>
+                        <span class="value">{{ $plan->custom_domain_limit > 0 ? $plan->custom_domain_limit : 'nenhum' }}</span>
                     </li>
                     <li>
                         <span class="label">Slug customizado</span>
@@ -100,7 +112,7 @@
                     </li>
                 </ul>
 
-                @if($plan->code === 'premium')
+                @if(!$plan->is_free)
                     <div class="actions" style="margin-top: 18px;">
                         @if($isOwner)
                             <span class="badge info">Acesso do dono liberado</span>
@@ -110,10 +122,15 @@
                                 <button class="button primary" type="submit">Gerenciar assinatura</button>
                             </form>
                         @else
-                            <form method="POST" action="{{ route('billing.checkout') }}">
-                                @csrf
-                                <button class="button primary" type="submit">Assinar Premium</button>
-                            </form>
+                            @if($plan->stripe_price_id)
+                                <form method="POST" action="{{ route('billing.checkout') }}">
+                                    @csrf
+                                    <input type="hidden" name="plan_id" value="{{ $plan->id }}">
+                                    <button class="button primary" type="submit">Assinar {{ $plan->name }}</button>
+                                </form>
+                            @else
+                                <span class="badge warning">Checkout em preparação</span>
+                            @endif
                         @endif
                     </div>
                 @endif

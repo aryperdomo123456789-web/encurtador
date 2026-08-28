@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BrandingController;
+use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\RichPreviewController as AdminRichPreviewController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\AnalyticsController;
@@ -91,6 +92,12 @@ $panelRoutes = static function (): void {
             Route::get('/branding', [BrandingController::class, 'edit'])->name('branding.edit');
             Route::post('/branding', [BrandingController::class, 'update'])->name('branding.update');
             Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+            Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+            Route::get('/plans/create', [PlanController::class, 'create'])->name('plans.create');
+            Route::post('/plans', [PlanController::class, 'store'])->name('plans.store');
+            Route::get('/plans/{plan}/edit', [PlanController::class, 'edit'])->name('plans.edit');
+            Route::put('/plans/{plan}', [PlanController::class, 'update'])->name('plans.update');
+            Route::delete('/plans/{plan}', [PlanController::class, 'archive'])->name('plans.archive');
             Route::get('/rich-previews', [AdminRichPreviewController::class, 'index'])->name('rich-previews.index');
             Route::get('/rich-previews/create', [AdminRichPreviewController::class, 'create'])->name('rich-previews.create');
             Route::post('/rich-previews', [AdminRichPreviewController::class, 'store'])->name('rich-previews.store');

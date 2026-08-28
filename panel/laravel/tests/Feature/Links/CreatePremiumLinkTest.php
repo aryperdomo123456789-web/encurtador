@@ -165,7 +165,7 @@ final class CreatePremiumLinkTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $plan = Plan::create([
+        $plan = Plan::query()->updateOrCreate(['code' => 'pro'], [
             'code' => 'pro',
             'name' => 'Pro',
             'description' => 'Plano premium para testes',

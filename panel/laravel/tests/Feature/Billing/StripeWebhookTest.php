@@ -92,6 +92,41 @@ class StripeWebhookTest extends TestCase
         ]);
     }
 
+    public function test_assinatura_atualizada_mapeia_price_id_para_plano(): void
+    {
+        $user = User::factory()->create();
+        $user->forceFill(['stripe_customer_id' => 'cus_pro'])->save();
+        $pro = Plan::query()->updateOrCreate(['code' => 'pro'], [
+            'name' => 'Pro',
+            'description' => 'Pro',
+            'is_free' => false,
+            'monthly_price_cents' => 4990,
+            'currency' => 'BRL',
+            'monthly_short_url_limit' => 100,
+            'monthly_click_limit' => 25000,
+            'custom_domain_limit' => 3,
+            'allow_custom_slug' => true,
+            'allow_custom_domain' => true,
+            'allow_custom_expiration' => true,
+            'allow_lifetime_links' => true,
+            'is_active' => true,
+            'is_public' => true,
+            'stripe_price_id' => 'price_pro_test',
+        ]);
+        $payload = $this->subscriptionPayload('evt_pro', 300, 'active', 'cus_pro', 'price_pro_test');
+
+        $this->postJson('/billing/webhook', $payload['body'], [
+            'Stripe-Signature' => $payload['signature'],
+        ])->assertOk();
+
+        $this->assertDatabaseHas('subscriptions', [
+            'user_id' => $user->id,
+            'plan_id' => $pro->id,
+            'status' => 'active',
+            'stripe_event_id' => 'evt_pro',
+        ]);
+    }
+
     public function test_assinatura_invalida_e_rejeitada(): void
     {
         $body = json_encode([
@@ -107,7 +142,7 @@ class StripeWebhookTest extends TestCase
     }
 
     /** @return array{body: array<string, mixed>, signature: string} */
-    private function subscriptionPayload(string $eventId, int $created, string $status, string $customer): array
+    private function subscriptionPayload(string $eventId, int $created, string $status, string $customer, ?string $priceId = null): array
     {
         $body = [
             'id' => $eventId,
@@ -123,6 +158,11 @@ class StripeWebhookTest extends TestCase
                     'current_period_start' => 100,
                     'current_period_end' => 200,
                     'cancel_at_period_end' => false,
+                    'items' => [
+                        'data' => $priceId === null ? [] : [[
+                            'price' => ['id' => $priceId],
+                        ]],
+                    ],
                 ],
             ],
         ];

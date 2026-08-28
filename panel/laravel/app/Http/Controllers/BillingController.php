@@ -24,7 +24,12 @@ final class BillingController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        $plans = Plan::query()->where('is_active', true)->orderBy('id')->get();
+        $plans = Plan::query()
+            ->where('is_active', true)
+            ->where('is_public', true)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
         $subscription = Subscription::query()
             ->where('user_id', $user->id)
             ->where('provider', 'stripe')
@@ -41,11 +46,25 @@ final class BillingController extends Controller
 
     public function checkout(Request $request): RedirectResponse
     {
+        $data = $request->validate([
+            'plan_id' => ['required', 'integer'],
+        ]);
+        $plan = Plan::query()
+            ->whereKey((int) $data['plan_id'])
+            ->where('is_active', true)
+            ->where('is_public', true)
+            ->where('is_free', false)
+            ->first();
+
+        if ($plan === null) {
+            return back()->withErrors(['billing' => 'Plano indisponível para assinatura.']);
+        }
+
         $secret = (string) config('services.stripe.secret');
-        $priceId = (string) config('services.stripe.premium_price_id');
+        $priceId = (string) $plan->stripe_price_id;
 
         if ($secret === '' || $priceId === '') {
-            return back()->withErrors(['billing' => 'Billing nao configurado. Contate o suporte.']);
+            return back()->withErrors(['billing' => 'Este plano ainda não está conectado a um Price Stripe.']);
         }
 
         $user = $request->user();
@@ -58,7 +77,7 @@ final class BillingController extends Controller
         if ($user->isPremium()) {
             return redirect()
                 ->route('billing.index')
-                ->with('status', 'Sua conta já está em um plano Premium ativo.');
+                ->with('status', 'Sua conta já possui uma assinatura paga ativa. Use o portal para gerenciá-la.');
         }
 
         $idempotencyKey = (string) $request->header('Idempotency-Key', '');
@@ -89,9 +108,13 @@ final class BillingController extends Controller
                 ]],
                 'success_url' => route('billing.success').'?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => route('billing.cancel'),
-                'metadata' => ['user_id' => (string) $user->id],
+                'metadata' => [
+                    'user_id' => (string) $user->id,
+                    'plan_id' => (string) $plan->id,
+                    'plan_code' => (string) $plan->code,
+                ],
             ], [
-                'idempotency_key' => 'melink-checkout-'.$user->id.'-'.$idempotencyKey,
+                'idempotency_key' => 'melink-checkout-'.$user->id.'-'.$plan->id.'-'.$idempotencyKey,
             ]);
         } catch (Throwable $e) {
             report($e);

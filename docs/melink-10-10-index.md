@@ -22,6 +22,7 @@
 | [`api-v1-melink.md`](api-v1-melink.md) | Contrato OpenAPI, autenticação, scopes, idempotência e operação | 10 |
 | [`privacy-lgpd-melink.md`](privacy-lgpd-melink.md) | Exportação LGPD, minimização e escopo de dados | 11 |
 | [`restore-drill-melink.md`](restore-drill-melink.md) | Evidência de backup, storage e restore em ambiente descartável | 12 |
+| [`admin-plan-catalog.md`](admin-plan-catalog.md) | Catálogo owner-only, preços, limites e checkout por plano | 13 |
 
 ## Sequência de execução
 
@@ -49,6 +50,8 @@ O programa 10/10 termina quando o produto demonstrar, em dados reais e não em i
 - Fluxos de identidade: verificação de e-mail condicional em produção e recuperação de senha com resposta anti-enumeração.
 - Hardening P0: rate limits por finalidade, trusted proxies explícitos, health sem sessão, headers globais e webhook Stripe idempotente.
 - Integridade de links: reserva atômica de quota Free, reconciliação do espelho e proteção contra corridas.
+- Catálogo comercial owner-only: planos Free, Start e Pro com preço em centavos, limites e status Stripe.
+- Checkout multi-plano: servidor resolve o `plan_id` para Price ID; webhook mapeia assinaturas pelo preço e rejeita preço desconhecido com segurança.
 
 ## Release de plataforma v1
 
