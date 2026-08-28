@@ -114,7 +114,15 @@ class BrandingSetting extends Model
         $request = request();
 
         if ($request !== null) {
-            return rtrim($request->getSchemeAndHttpHost(), '/').'/'.$path;
+            $forwardedScheme = trim(explode(',', (string) $request->header('X-Forwarded-Proto'))[0]);
+            $configuredScheme = parse_url((string) config('app.url'), PHP_URL_SCHEME);
+            $scheme = $forwardedScheme !== '' ? strtolower($forwardedScheme) : strtolower($request->getScheme());
+
+            if ($configuredScheme === 'https' || (bool) config('panel.force_https_assets')) {
+                $scheme = 'https';
+            }
+
+            return $scheme.'://'.$request->getHost().'/'.$path;
         }
 
         return url($path);

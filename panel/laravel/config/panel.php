@@ -45,6 +45,10 @@ return [
     'health_rate_limit' => (int) env('PANEL_HEALTH_RATE_LIMIT', 60),
     'api_rate_limit' => (int) env('PANEL_API_RATE_LIMIT', 120),
     'api_token_expiry_days' => (int) env('PANEL_API_TOKEN_EXPIRY_DAYS', 365),
+    'force_https_assets' => (bool) env(
+        'PANEL_FORCE_HTTPS_ASSETS',
+        env('APP_ENV', 'local') === 'production'
+    ),
     'require_email_verification' => (bool) env(
         'PANEL_REQUIRE_EMAIL_VERIFICATION',
         env('APP_ENV', 'local') === 'production'
