@@ -75,6 +75,13 @@
             margin: 0 auto;
             padding: 24px 0 56px;
         }
+        .app-shell.app-shell-marketing {
+            width: min(1480px, calc(100% - 48px));
+            padding-top: 0;
+        }
+        .app-shell.app-shell-marketing .marketing-main {
+            width: 100%;
+        }
         .topbar {
             display: flex;
             align-items: center;
@@ -837,7 +844,7 @@
     </style>
 </head>
 <body>
-<div class="app-shell">
+<div class="app-shell {{ trim($__env->yieldContent('marketing_page')) !== '' ? 'app-shell-marketing' : '' }}">
     @hasSection('marketing_page')
     @else
     <header class="topbar">
