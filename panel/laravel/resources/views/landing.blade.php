@@ -22,6 +22,7 @@
         overflow: visible;
     }
 
+    .mk-page { overflow-x: clip; }
     .mk-page * { box-sizing: border-box; }
     .mk-page a { color: inherit; }
     .mk-container { width: min(1400px, 100%); margin: 0 auto; }
